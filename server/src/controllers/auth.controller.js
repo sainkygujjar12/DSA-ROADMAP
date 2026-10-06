@@ -4,6 +4,9 @@ const {
   googleAuthUser,
   verifyOtpAndActivate,
   resendOtp,
+  forgetPassword,
+  verifyResetOtp,
+  confirmResetPassword,
 } = require("../services/auth.service");
 const User = require("../models/User");
 const Progress = require("../models/Progress");
@@ -268,9 +271,9 @@ exports.getMe = async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({
-        success: false,
-        message: "Not authenticated",
-      });
+      success: false,
+      message: "Not authenticated",
+    });
     }
 
     const user = await User.findById(req.user.id).select(
@@ -284,10 +287,6 @@ exports.getMe = async (req, res) => {
       });
     }
 
-    // The User document's totalSolved/streak fields are
-    // never kept in sync — Progress is the real source of
-    // truth for solving activity, so compute live here
-    // rather than trusting stale stored values.
     const progress = await Progress.findOne({
       user: req.user.id,
     }).select("solvedQuestions streak");
@@ -304,6 +303,62 @@ exports.getMe = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ==============================
+// FORGET PASSWORD
+// ==============================
+exports.forgotPassword = async (req, res) => {
+  try {
+    const result = await forgetPassword(req.body);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==============================
+// VERIFY RESET OTP
+// ==============================
+exports.verifyResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const { token } = await verifyResetOtp(email, otp);
+    res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+      token,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==============================
+// CONFIRM RESET PASSWORD
+// ==============================
+exports.confirmResetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    const result = await confirmResetPassword(token, newPassword);
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    res.status(400).json({
       success: false,
       message: error.message,
     });

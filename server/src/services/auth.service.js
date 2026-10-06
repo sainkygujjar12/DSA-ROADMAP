@@ -2,7 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
-const { sendOtpEmail } = require("../utils/sendEmail");
+const { sendOtpEmail, sendResetPasswordOtpEmail } = require("../utils/sendEmail");
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
@@ -11,15 +11,16 @@ const googleClient = new OAuth2Client(
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-const signToken = (user) =>
+const signToken = (user, purpose = "session", expiresIn = "7d") =>
   jwt.sign(
     {
       id: user._id,
       role: user.role,
+      purpose,
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: "7d",
+      expiresIn,
     }
   );
 
@@ -37,9 +38,6 @@ exports.registerUser = async ({ name, email, password }) => {
   let user;
 
   if (existingUser && !existingUser.isVerified) {
-    // They started registering before but never verified —
-    // update their details/OTP and resend rather than
-    // blocking them with "already exists".
     existingUser.name = name;
     existingUser.password = hashedPassword;
     existingUser.otp = otp;
@@ -60,13 +58,6 @@ exports.registerUser = async ({ name, email, password }) => {
 
   return user;
 };
-
-// ======================================
-// Verify OTP
-// Confirms the code emailed at registration, marks the
-// account verified, and only THEN issues a login JWT —
-// unverified accounts can't sign in.
-// ======================================
 
 exports.verifyOtpAndActivate = async (email, otp) => {
   const user = await User.findOne({ email }).select(
@@ -100,10 +91,6 @@ exports.verifyOtpAndActivate = async (email, otp) => {
 
   return { user, token };
 };
-
-// ======================================
-// Resend OTP
-// ======================================
 
 exports.resendOtp = async (email) => {
   const user = await User.findOne({ email });
@@ -160,15 +147,6 @@ exports.loginUser = async ({ email, password }) => {
   };
 };
 
-// ======================================
-// Google Sign-In
-// Verifies the ID token the frontend received from
-// Google Identity Services, then finds or creates the
-// matching local user, and issues our own JWT — so the
-// rest of the app (protect middleware, etc.) doesn't
-// need to know Google was involved at all.
-// ======================================
-
 exports.googleAuthUser = async (idToken) => {
   if (!idToken) {
     throw new Error("Missing Google credential");
@@ -194,9 +172,6 @@ exports.googleAuthUser = async (idToken) => {
   let user = await User.findOne({ googleId });
 
   if (!user) {
-    // No account linked to this Google ID yet — check if
-    // an existing local account shares the same email, and
-    // link it instead of creating a duplicate account.
     user = await User.findOne({ email });
 
     if (user) {
@@ -223,4 +198,64 @@ exports.googleAuthUser = async (idToken) => {
     user,
     token,
   };
+};
+
+// ======================================
+// Password Reset Flow
+// ======================================
+
+exports.forgetPassword = async (email) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    // For security, don't reveal if the email exists
+    return { message: "If an account exists with this email, a reset code has been sent." };
+  }
+
+  if (user.authProvider === "google") {
+    throw new Error("This account uses Google Sign-In. Please reset your password via Google.");
+  }
+
+  const otp = generateOtp();
+  user.otp = otp;
+  user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+  await user.save();
+
+  await sendResetPasswordOtpEmail(email, user.name, otp);
+
+  return { message: "A password reset code has been sent to your email." };
+};
+
+exports.verifyResetOtp = async (email, otp) => {
+  const user = await User.findOne({ email }).select("+otp +otpExpiry");
+
+  if (!user || user.otp !== otp || (user.otpExpiry && user.otpExpiry < new Date())) {
+    throw new Error("Invalid or expired verification code");
+  }
+
+  // Issue a short-lived token specifically for password reset
+  const token = signToken(user, "password_reset", "15m");
+
+  return { token };
+};
+
+exports.confirmResetPassword = async (token, newPassword) => {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const user = await User.findById(decoded.id);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (decoded.purpose !== "password_reset") {
+    throw new Error("Invalid token for this operation");
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  user.otp = undefined;
+  user.otpExpiry = undefined;
+  await user.save();
+
+  return { message: "Password has been successfully reset." };
 };

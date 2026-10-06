@@ -49,7 +49,8 @@ function Login() {
 
       if (message.toLowerCase().includes("verify")) {
         setNeedsVerification(true);
-        resendOtp(form.email).catch(() => {});
+        // Removed automatic resendOtp(form.email) to prevent SMTP lag and spam.
+        // Users can manually request a resend on the verification page if needed.
       }
     } finally {
       setSubmitting(false);

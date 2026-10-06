@@ -15,7 +15,6 @@ function Roadmap() {
   const fetchTopics = async () => {
     try {
       const res = await getTopics();
-
       setTopics(res?.data || []);
     } catch (err) {
       console.error("Roadmap error:", err);
@@ -37,62 +36,49 @@ function Roadmap() {
 
   return (
     <MainLayout>
-      {/* Header */}
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold">
-          📍 DSA Roadmap
-        </h1>
-
+      <div className="mb-12 max-w-4xl">
+        <h1 className="text-4xl font-bold">📍 DSA Roadmap</h1>
         <p className="mt-2 text-slate-400">
-          Follow a structured path to master DSA.
+          A structured path to master data structures and algorithms.
         </p>
       </div>
 
-      {/* Empty State */}
       {topics.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-400">
+        <div className="rounded-lg border border-slate-800 bg-slate-900 p-10 text-center text-slate-400">
           No topics found.
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-
+        <div className="flex flex-col gap-4 max-w-4xl">
           {topics.map((topic, index) => (
             <Link
               key={topic._id}
               to={`/roadmap/${topic.slug}`}
-              className="rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:-translate-y-2 hover:border-cyan-500 hover:shadow-lg"
+              className="group flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/50 p-5 transition hover:border-cyan-500/50 hover:bg-slate-900"
             >
+              <div className="flex items-center gap-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-lg font-bold text-slate-400 group-hover:bg-cyan-500/10 group-hover:text-cyan-400 transition">
+                  {index + 1}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-200 group-hover:text-white transition">
+                    {topic.name}
+                  </h2>
+                  <p className="text-sm text-slate-500 line-clamp-1">
+                    {topic.description || "Master this topic step by step"}
+                  </p>
+                </div>
+              </div>
 
-              {/* Step */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-500">
-                  Step {index + 1}
-                </p>
-
-                <span className="text-3xl">
+              <div className="flex items-center gap-4">
+                <span className="text-2xl opacity-50 group-hover:opacity-100 transition">
                   {topic.icon}
                 </span>
+                <span className="hidden sm:block text-sm font-medium text-cyan-500 opacity-0 group-hover:opacity-100 transition">
+                  Study →
+                </span>
               </div>
-
-              {/* Title */}
-              <h2 className="mt-2 text-2xl font-bold">
-                {topic.name}
-              </h2>
-
-              {/* Description */}
-              <p className="mt-3 text-sm text-slate-400">
-                {topic.description ||
-                  "Master this topic step by step"}
-              </p>
-
-              {/* CTA */}
-              <div className="mt-6 font-medium text-cyan-400">
-                Start Learning →
-              </div>
-
             </Link>
           ))}
-
         </div>
       )}
     </MainLayout>

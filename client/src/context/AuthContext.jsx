@@ -25,21 +25,20 @@ export function AuthProvider({ children }) {
     !!localStorage.getItem("token")
   );
 
+  // Consolidated effect to sync auth state to localStorage
   useEffect(() => {
     if (token) {
       localStorage.setItem("token", token);
     } else {
       localStorage.removeItem("token");
     }
-  }, [token]);
 
-  useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
     } else {
       localStorage.removeItem("user");
     }
-  }, [user]);
+  }, [token, user]);
 
   // On first load, if a token exists (e.g. after a page
   // refresh), re-fetch the real user from the server so

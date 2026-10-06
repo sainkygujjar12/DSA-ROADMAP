@@ -43,3 +43,22 @@ export const changePassword = async (data) => {
   const response = await api.put("/auth/change-password", data);
   return response.data;
 };
+
+// ======================================
+// Password Recovery Services
+// ======================================
+
+export const requestPasswordReset = async (email) => {
+  const response = await api.post("/auth/forgot-password", { email });
+  return response.data;
+};
+
+export const verifyResetOtp = async (data) => {
+  const response = await api.post("/auth/reset-password/verify", data);
+  return response.data;
+};
+
+export const confirmResetPassword = async (data) => {
+  const response = await api.post("/auth/reset-password/confirm", data);
+  return response.data;
+};

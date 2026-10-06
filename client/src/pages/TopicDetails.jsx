@@ -6,6 +6,7 @@ import QuestionTable from "../components/topic/QuestionTable";
 import SearchBar from "../components/topic/SearchBar";
 import FilterDropdown from "../components/ui/FilterDropdown";
 import { getTopicBySlug } from "../services/topicService";
+import { toggleQuestionSolved, toggleBookmark } from "../services/progressService";
 
 function TopicDetails() {
   const { slug } = useParams();
@@ -18,6 +19,10 @@ function TopicDetails() {
   const [difficulty, setDifficulty] = useState("All");
   const [pattern, setPattern] = useState("All");
 
+  // Track which question is currently being updated to show loader in row
+  const [solvingId, setSolvingId] = useState(null);
+  const [bookmarkingId, setBookmarkingId] = useState(null);
+
   useEffect(() => {
     fetchTopic();
   }, [slug]);
@@ -25,7 +30,6 @@ function TopicDetails() {
   const fetchTopic = async () => {
     try {
       const res = await getTopicBySlug(slug);
-
       setTopic(res?.data?.topic || null);
       setQuestions(res?.data?.questions || []);
     } catch (err) {
@@ -34,6 +38,34 @@ function TopicDetails() {
       setQuestions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleSolved = async (id) => {
+    setSolvingId(id);
+    try {
+      await toggleQuestionSolved(id);
+      setQuestions((prev) =>
+        prev.map((q) => (q._id === id ? { ...q, solved: !q.solved } : q))
+      );
+    } catch (err) {
+      alert("Failed to update solved status");
+    } finally {
+      setSolvingId(null);
+    }
+  };
+
+  const handleToggleBookmark = async (id) => {
+    setBookmarkingId(id);
+    try {
+      await toggleBookmark(id);
+      setQuestions((prev) =>
+        prev.map((q) => (q._id === id ? { ...q, bookmarked: !q.bookmarked } : q))
+      );
+    } catch (err) {
+      alert("Failed to update bookmark");
+    } finally {
+      setBookmarkingId(null);
     }
   };
 
@@ -62,7 +94,6 @@ function TopicDetails() {
     });
   }, [questions, search, difficulty, pattern]);
 
-  // ================= LOADING =================
   if (loading) {
     return (
       <MainLayout>
@@ -73,7 +104,6 @@ function TopicDetails() {
     );
   }
 
-  // ================= NOT FOUND =================
   if (!topic) {
     return (
       <MainLayout>
@@ -86,52 +116,50 @@ function TopicDetails() {
 
   return (
     <MainLayout>
-
-      {/* Back */}
-      <Link
-        to="/roadmap"
-        className="text-cyan-400 hover:underline"
-      >
-        ← Back to Roadmap
-      </Link>
-
-      {/* Header */}
-      <div className="mt-6 mb-8">
+      <div className="flex flex-col gap-2 mb-8">
+        <Link
+          to="/roadmap"
+          className="text-sm text-cyan-400 hover:text-cyan-300 transition"
+        >
+          ← Back to Roadmap
+        </Link>
         <h1 className="text-4xl font-bold">
-          📘 {topic?.name}
+          {topic?.name}
         </h1>
-
-        <p className="mt-2 text-slate-400">
+        <p className="text-slate-400 max-w-2xl">
           {topic?.description}
         </p>
       </div>
 
-      {/* Search */}
-      <SearchBar
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      {/* Filters */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2">
-        <FilterDropdown
-          label="Difficulty"
-          options={["All", "Easy", "Medium", "Hard"]}
-          value={difficulty}
-          onChange={setDifficulty}
+      <div className="flex flex-col gap-6 mb-8">
+        <SearchBar
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
 
-        <FilterDropdown
-          label="Pattern"
-          options={patternOptions}
-          value={pattern}
-          onChange={setPattern}
-        />
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          <FilterDropdown
+            label="Difficulty"
+            options={["All", "Easy", "Medium", "Hard"]}
+            value={difficulty}
+            onChange={setDifficulty}
+          />
+          <FilterDropdown
+            label="Pattern"
+            options={patternOptions}
+            value={pattern}
+            onChange={setPattern}
+          />
+        </div>
       </div>
 
-      {/* Questions */}
-      <QuestionTable questions={filteredQuestions} />
-
+      <QuestionTable
+        questions={filteredQuestions}
+        onToggleSolved={handleToggleSolved}
+        onToggleBookmark={handleToggleBookmark}
+        solvingId={solvingId}
+        bookmarkingId={bookmarkingId}
+      />
     </MainLayout>
   );
 }

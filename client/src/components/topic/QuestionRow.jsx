@@ -1,81 +1,39 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import DifficultyText from "../ui/DifficultyText";
 
-import {
-  toggleQuestionSolved,
-  toggleBookmark,
-} from "../../services/progressService";
-
-const DIFFICULTY_STYLES = {
-  Easy: "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20",
-  Medium: "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20",
-  Hard: "bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/20",
-};
-
-function QuestionRow({ question }) {
-  const [solved, setSolved] = useState(question.solved || false);
-  const [bookmarked, setBookmarked] = useState(
-    question.bookmarked || false
-  );
-
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setSolved(question.solved || false);
-    setBookmarked(question.bookmarked || false);
-  }, [question]);
-
-  const handleSolved = async () => {
-    try {
-      setLoading(true);
-
-      await toggleQuestionSolved(question._id);
-
-      setSolved((prev) => !prev);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update question status.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBookmark = async () => {
-    try {
-      await toggleBookmark(question._id);
-
-      setBookmarked((prev) => !prev);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update bookmark.");
-    }
-  };
+function QuestionRow({
+  question,
+  onToggleSolved,
+  onToggleBookmark,
+  isSolving,
+  isBookmarking
+}) {
+  const solved = question.solved || false;
+  const bookmarked = question.bookmarked || false;
 
   return (
     <tr className="group border-b border-slate-800/60 transition-colors hover:bg-slate-900/60">
-      {/* Solved */}
-      <td className="px-4 py-3.5">
+      {/* Solved Checkbox */}
+      <td className="px-4 py-3.5 w-12">
         <button
-          onClick={handleSolved}
-          disabled={loading}
+          onClick={() => onToggleSolved(question._id)}
+          disabled={isSolving}
           aria-label={solved ? "Mark as unsolved" : "Mark as solved"}
-          className={`flex h-6 w-6 items-center justify-center rounded-md border transition ${
+          className={`flex h-5 w-5 items-center justify-center rounded border transition ${
             solved
               ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
               : "border-slate-700 text-transparent hover:border-slate-500"
           }`}
         >
-          {loading ? (
-            <span className="text-xs">⏳</span>
+          {isSolving ? (
+            <span className="text-[10px]">⏳</span>
           ) : (
             <svg
               viewBox="0 0 24 24"
-              className={`h-3.5 w-3.5 ${
-                solved ? "opacity-100" : "opacity-0"
-              }`}
+              className={`h-3 w-3 ${solved ? "opacity-100" : "opacity-0"}`}
               fill="none"
               stroke="currentColor"
-              strokeWidth="3"
+              strokeWidth="4"
             >
               <path
                 strokeLinecap="round"
@@ -88,13 +46,12 @@ function QuestionRow({ question }) {
       </td>
 
       {/* Bookmark */}
-      <td className="px-4 py-3.5">
+      <td className="px-4 py-3.5 w-12 text-center">
         <button
-          onClick={handleBookmark}
-          aria-label={
-            bookmarked ? "Remove bookmark" : "Add bookmark"
-          }
-          className={`text-lg transition ${
+          onClick={() => onToggleBookmark(question._id)}
+          disabled={isBookmarking}
+          aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+          className={`text-base transition ${
             bookmarked
               ? "text-yellow-400"
               : "text-slate-700 hover:text-slate-500"
@@ -104,11 +61,13 @@ function QuestionRow({ question }) {
         </button>
       </td>
 
-      {/* Question */}
+      {/* Question Title */}
       <td className="px-4 py-3.5">
         <Link
           to={`/questions/${question.slug}`}
-          className="font-medium text-slate-200 transition group-hover:text-cyan-400"
+          className={`font-medium transition group-hover:text-cyan-400 ${
+            solved ? "text-slate-500 line-through" : "text-slate-200"
+          }`}
         >
           {question.title}
         </Link>
@@ -116,29 +75,12 @@ function QuestionRow({ question }) {
 
       {/* Difficulty */}
       <td className="px-4 py-3.5">
-        <span
-          className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-            DIFFICULTY_STYLES[question.difficulty] ||
-            "bg-slate-700/40 text-slate-300"
-          }`}
-        >
-          {question.difficulty}
-        </span>
+        <DifficultyText difficulty={question.difficulty} />
       </td>
 
-      {/* Companies */}
-      <td className="px-4 py-3.5 text-sm text-slate-500">
+      {/* Companies Count */}
+      <td className="px-4 py-3.5 text-xs text-slate-500 text-center">
         {question.companies?.length || 0}
-      </td>
-
-      {/* Solve */}
-      <td className="px-4 py-3.5">
-        <Link
-          to={`/questions/${question.slug}`}
-          className="text-sm font-medium text-cyan-500 opacity-80 transition hover:text-cyan-400 hover:opacity-100"
-        >
-          Solve →
-        </Link>
       </td>
     </tr>
   );

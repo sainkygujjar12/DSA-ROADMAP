@@ -39,7 +39,7 @@ flowchart LR
 
     subgraph External["External services"]
         Google["Google Identity<br/>Optional sign-in"]
-        Email["Brevo HTTPS API<br/>Verification and reset emails"]
+        Email["SMTP2GO HTTPS API<br/>Verification and reset emails"]
         Practice["LeetCode, GeeksforGeeks<br/>and study resources"]
     end
 
@@ -65,7 +65,7 @@ flowchart LR
 Arrows show calls or data access; HTTP responses return along the same request
 path. The maintenance commands run separately and reuse the models; they are not
 an automatically running service inside the web process. SMTP is also supported
-for local development or compatible hosts; the Render Blueprint selects Brevo.
+for local development or compatible hosts; the Render Blueprint selects SMTP2GO.
 
 ## Responsibilities and data
 
@@ -76,7 +76,7 @@ for local development or compatible hosts; the Render Blueprint selects Brevo.
 | Mongoose connection | Reuses a bounded pool, applies connection/query timeouts and disables indefinite command buffering. The configured default is 20 application connections per process. |
 | MongoDB Atlas | Persists the catalog, accounts and progress across application restarts or deployments. |
 | Google Identity | Provides an optional identity credential that the server validates before creating a session. |
-| Brevo | Delivers verification and password-reset codes through HTTPS. API credentials stay on the server. |
+| SMTP2GO | Delivers verification and password-reset codes through HTTPS. API credentials stay on the server. |
 
 | Collection | Main relationships |
 | --- | --- |

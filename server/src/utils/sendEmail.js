@@ -27,17 +27,22 @@ function getTransporter() {
 async function sendEmail({ to, subject, html }) {
   // Render Free blocks common SMTP ports. HTTPS transactional email works
   // without an always-on worker or a new runtime dependency.
-  if (process.env.EMAIL_PROVIDER === 'brevo') {
-    if (!process.env.BREVO_API_KEY || !process.env.EMAIL_FROM) throw new Error('Email service is not configured');
+  if (process.env.EMAIL_PROVIDER === 'smtp2go') {
+    if (!process.env.SMTP2GO_API_KEY || !process.env.EMAIL_FROM) throw new Error('Email service is not configured');
     try {
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      const response = await fetch('https://api.smtp2go.com/v3/email/send', {
         method: 'POST',
-        headers: { 'api-key': process.env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ sender: { name: 'DSA Roadmap', email: process.env.EMAIL_FROM }, to: [{ email: to }], subject, htmlContent: html }),
+        headers: { 'X-Smtp2go-Api-Key': process.env.SMTP2GO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ sender: `DSA Roadmap <${process.env.EMAIL_FROM}>`, to: [to], subject, html_body: html, fastaccept: false }),
         signal: AbortSignal.timeout(10000),
       });
       if (!response.ok) throw new Error('Email provider rejected request');
-      await response.arrayBuffer();
+      // This API can return HTTP 200 with recipient failures. Only report
+      // success when it confirms our one recipient was accepted.
+      const result = await response.json();
+      if (result?.data?.succeeded !== 1 || result.data.failed !== 0 || result.data.error || result.data.error_code || result.data.failures?.length) {
+        throw new Error('Email provider did not accept the recipient');
+      }
       return { success: true, mocked: false };
     } catch {
       // Never include the provider response, API key, recipient or OTP in logs.

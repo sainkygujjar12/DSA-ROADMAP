@@ -149,7 +149,7 @@ Google Cloud client's **Authorized JavaScript origins**.
 ## Deployment and live updates
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the free Render + MongoDB Atlas setup,
-Brevo HTTPS email, MongoDB backups, and GitHub checks before automatic deployment.
+SMTP2GO HTTPS email, MongoDB backups, and GitHub checks before automatic deployment.
 The Render Blueprint is [render.yaml](render.yaml). Only the verified account
 `sainkygurjar12@gmail.com` can access `/admin`.
 

@@ -9,22 +9,22 @@ function Button({
 }) {
   const variants = {
     primary:
-      "bg-cyan-600 text-white hover:bg-cyan-500 shadow-sm shadow-cyan-600/20",
+      "ui-button-primary",
 
     secondary:
-      "bg-slate-800 text-slate-100 hover:bg-slate-700 ring-1 ring-slate-700",
+      "ui-button-secondary",
 
     outline:
-      "bg-transparent text-slate-200 ring-1 ring-slate-700 hover:bg-slate-800 hover:ring-slate-600",
+      "ui-button-outline",
 
     danger:
-      "bg-red-600 text-white hover:bg-red-500 shadow-sm shadow-red-600/20",
+      "bg-red-900/80 text-white hover:bg-red-800 shadow-sm",
 
     success:
-      "bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm shadow-emerald-600/20",
+      "bg-emerald-900/80 text-white hover:bg-emerald-800 shadow-sm",
 
     light:
-      "bg-white text-slate-900 hover:bg-slate-100 shadow-sm",
+      "bg-white text-zinc-900 hover:bg-zinc-100 shadow-sm",
   };
 
   const sizes = {
@@ -39,11 +39,10 @@ function Button({
       onClick={onClick}
       disabled={disabled}
       className={`
-        inline-flex items-center justify-center gap-2
-        font-medium transition-all duration-150
-        active:scale-[0.97]
-        disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950
+        ui-button inline-flex items-center justify-center gap-2
+        font-medium transition-colors duration-150
+        disabled:cursor-not-allowed disabled:opacity-50
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950
         ${sizes[size]} ${variants[variant]} ${className}
       `}
     >

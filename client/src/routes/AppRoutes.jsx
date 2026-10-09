@@ -1,51 +1,64 @@
+import { lazy, Suspense } from "react";
+import Loader from "../components/ui/Loader";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // ================= Public Pages =================
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
+const Home = lazy(() => import("../pages/Home"));
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const VerifyResetOtp = lazy(() => import("../pages/VerifyResetOtp"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
 
 // ================= Layout =================
 import UserLayout from "../components/layout/UserLayout";
 
 // ================= User Pages =================
-import Dashboard from "../pages/Dashboard";
-import Roadmap from "../pages/Roadmap";
-import TopicDetails from "../pages/TopicDetails";
-import QuestionDetails from "../pages/QuestionDetails";
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const Roadmap = lazy(() => import("../pages/Roadmap"));
+const TopicDetails = lazy(() => import("../pages/TopicDetails"));
+const QuestionDetails = lazy(() => import("../pages/QuestionDetails"));
 
-import Companies from "../pages/Companies";
-import CompanyDetails from "../pages/CompanyDetails";
+const Companies = lazy(() => import("../pages/Companies"));
+const CompanyDetails = lazy(() => import("../pages/CompanyDetails"));
 
-import Sheets from "../pages/Sheets";
-import SheetDetails from "../pages/SheetDetails";
+const Sheets = lazy(() => import("../pages/Sheets"));
+const SheetDetails = lazy(() => import("../pages/SheetDetails"));
 
-import Bookmarks from "../pages/Bookmarks";
-import Notes from "../pages/Notes";
-import Profile from "../pages/Profile";
+const Bookmarks = lazy(() => import("../pages/Bookmarks"));
+const Notes = lazy(() => import("../pages/Notes"));
+const Profile = lazy(() => import("../pages/Profile"));
 
 // ================= Admin Pages =================
-import AdminDashboard from "../pages/admin/Dashboard";
-import AdminQuestions from "../pages/admin/Questions";
-import AdminTopics from "../pages/admin/Topics";
-import AdminCompanies from "../pages/admin/Companies";
-import AdminSheets from "../pages/admin/Sheets";
-import AdminUsers from "../pages/admin/Users";
-import AdminBulkImport from "../pages/admin/BulkImport";
+const AdminDashboard = lazy(() => import("../pages/admin/Dashboard"));
+const AdminQuestions = lazy(() => import("../pages/admin/Questions"));
+const AdminTopics = lazy(() => import("../pages/admin/Topics"));
+const AdminCompanies = lazy(() => import("../pages/admin/Companies"));
+const AdminSheets = lazy(() => import("../pages/admin/Sheets"));
+const AdminUsers = lazy(() => import("../pages/admin/Users"));
+const AdminBulkImport = lazy(() => import("../pages/admin/BulkImport"));
 
 // ================= Route Guards =================
 import ProtectedRoute from "./ProtectedRoute";
+import PublicOnlyRoute from "./PublicOnlyRoute";
 import AdminRoute from "./AdminRoute";
+
+const Settings = lazy(() => import("../pages/Settings"));
+const NotFound = lazy(() => import("../pages/NotFound"));
 
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<div className="route-loading"><Loader /></div>}>
       <Routes>
 
         {/* ================= PUBLIC ================= */}
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+        <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+        <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
+        <Route path="/verify-reset-otp" element={<PublicOnlyRoute><VerifyResetOtp /></PublicOnlyRoute>} />
+        <Route path="/reset-password" element={<PublicOnlyRoute><ResetPassword /></PublicOnlyRoute>} />
 
         {/* ================= USER ROUTES (WRAPPED IN USERLAYOUT) ================= */}
 
@@ -62,24 +75,12 @@ function AppRoutes() {
 
         <Route
           path="/roadmap"
-          element={
-            <ProtectedRoute>
-              <UserLayout>
-                <Roadmap />
-              </UserLayout>
-            </ProtectedRoute>
-          }
+          element={<UserLayout><Roadmap /></UserLayout>}
         />
 
         <Route
           path="/roadmap/:slug"
-          element={
-            <ProtectedRoute>
-              <UserLayout>
-                <TopicDetails />
-              </UserLayout>
-            </ProtectedRoute>
-          }
+          element={<UserLayout><TopicDetails /></UserLayout>}
         />
 
         <Route
@@ -95,46 +96,22 @@ function AppRoutes() {
 
         <Route
           path="/companies"
-          element={
-            <ProtectedRoute>
-              <UserLayout>
-                <Companies />
-              </UserLayout>
-            </ProtectedRoute>
-          }
+          element={<UserLayout><Companies /></UserLayout>}
         />
 
         <Route
           path="/companies/:slug"
-          element={
-            <ProtectedRoute>
-              <UserLayout>
-                <CompanyDetails />
-              </UserLayout>
-            </ProtectedRoute>
-          }
+          element={<UserLayout><CompanyDetails /></UserLayout>}
         />
 
         <Route
           path="/sheets"
-          element={
-            <ProtectedRoute>
-              <UserLayout>
-                <Sheets />
-              </UserLayout>
-            </ProtectedRoute>
-          }
+          element={<UserLayout><Sheets /></UserLayout>}
         />
 
         <Route
           path="/sheets/:slug"
-          element={
-            <ProtectedRoute>
-              <UserLayout>
-                <SheetDetails />
-              </UserLayout>
-            </ProtectedRoute>
-          }
+          element={<UserLayout><SheetDetails /></UserLayout>}
         />
 
         <Route
@@ -235,7 +212,10 @@ function AppRoutes() {
           }
         />
 
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

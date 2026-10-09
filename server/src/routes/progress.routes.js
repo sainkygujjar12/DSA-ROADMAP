@@ -1,6 +1,11 @@
 const express = require("express");
 
 const router = express.Router();
+const mongoose = require("mongoose");
+router.param("questionId", (req, res, next, id) => {
+  if (!mongoose.isValidObjectId(id)) return res.status(400).json({ success: false, message: "Invalid question ID" });
+  next();
+});
 
 const {
   getUserProgress,

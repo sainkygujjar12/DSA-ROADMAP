@@ -1,70 +1,31 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const User = require('../models/User');
+const { effectiveRole } = require('../config/admin');
 
-exports.protect = (req, res, next) => {
+async function authenticate(req) {
+  if (req.authenticationChecked) return req.user || null;
+  const header = req.headers.authorization;
+  if (typeof header !== 'string' || !/^Bearer \S+$/.test(header)) return null;
+  let decoded;
   try {
-    let token = req.headers.authorization;
-
-    if (!token || !token.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authorized",
-      });
-    }
-
-    token = token.split(" ")[1];
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    req.user = {
-      id: decoded.id,
-      role: decoded.role,
-    };
-
+    decoded = jwt.verify(header.slice(7), process.env.JWT_SECRET, { algorithms: ['HS256'] });
+  } catch { return null; }
+  if (decoded.purpose !== 'session' || !mongoose.isValidObjectId(decoded.id)) return null;
+  const user = await User.findById(decoded.id).select('email role isVerified +tokenVersion').lean();
+  if (!user?.isVerified || (decoded.version ?? 0) !== (user.tokenVersion || 0)) return null;
+  return { id: String(user._id), email: user.email, isVerified: user.isVerified, role: effectiveRole(user) };
+}
+exports.protect = async (req, res, next) => {
+  try {
+    const user = await authenticate(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Your session has expired. Please log in again.' });
+    req.user = user;
     next();
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token",
-    });
-  }
+  } catch { res.status(503).json({ success: false, message: 'Authentication is temporarily unavailable.' }); }
 };
-
-// ======================================
-// OPTIONAL AUTH
-// Attaches req.user if a valid token is present,
-// but never blocks the request if it's missing or
-// invalid. Used on public browsing routes (topics,
-// sheets, companies) so logged-in users get their
-// solved/bookmarked state without requiring guests
-// to log in just to browse.
-// ======================================
-
-exports.optionalAuth = (req, res, next) => {
-  try {
-    let token = req.headers.authorization;
-
-    if (!token || !token.startsWith("Bearer ")) {
-      return next();
-    }
-
-    token = token.split(" ")[1];
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    req.user = {
-      id: decoded.id,
-      role: decoded.role,
-    };
-  } catch (error) {
-    // Invalid/expired token on a public route — just
-    // treat the request as a guest instead of failing it.
-  }
-
+exports.optionalAuth = async (req, res, next) => {
+  try { req.user = await authenticate(req); req.authenticationChecked = true; }
+  catch { return res.status(503).json({ success: false, message: 'Service temporarily unavailable.' }); }
   next();
 };

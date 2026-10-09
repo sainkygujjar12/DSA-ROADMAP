@@ -22,7 +22,7 @@ exports.getUserProgress = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
@@ -48,7 +48,7 @@ exports.toggleQuestionSolved = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
@@ -74,7 +74,7 @@ exports.updateLastVisited = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
@@ -100,7 +100,7 @@ exports.toggleBookmark = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
@@ -127,7 +127,7 @@ exports.saveQuestionNotes = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });
@@ -152,7 +152,7 @@ exports.deleteQuestionNote = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
     });

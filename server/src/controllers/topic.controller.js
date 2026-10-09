@@ -1,5 +1,7 @@
+const { escapeRegex, pageSize, pageNumber } = require("../utils/queryValidation");
 const Topic = require("../models/Topic");
 const Question = require("../models/Question");
+const Progress = require("../models/Progress");
 const {
   getUserQuestionFlags,
   attachUserFlags,
@@ -10,11 +12,63 @@ const {
 // ==============================
 const getAllTopics = async (req, res) => {
   try {
-    const topics = await Topic.find();
+    const [topics, questionCounts] = await Promise.all([
+      Topic.find().sort({ order: 1 }).lean(),
+      Question.aggregate([
+        { $match: { isActive: true } },
+        {
+          $group: {
+            _id: "$topic",
+            totalQuestions: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const countByTopic = new Map(
+      questionCounts.map((item) => [
+        item._id.toString(),
+        item.totalQuestions,
+      ])
+    );
+
+    let solvedByTopic = new Map();
+
+    if (req.user?.id) {
+      const progress = await Progress.findOne({ user: req.user.id })
+        .select("solvedQuestions")
+        .populate({ path: "solvedQuestions", select: "topic", match: { isActive: true } })
+        .lean();
+
+      solvedByTopic = (progress?.solvedQuestions || []).reduce(
+        (map, question) => {
+          const topicId = question?.topic?.toString();
+          if (topicId) {
+            map.set(topicId, (map.get(topicId) || 0) + 1);
+          }
+          return map;
+        },
+        new Map()
+      );
+    }
+
+    const enrichedTopics = topics.map((topic) => {
+      const totalQuestions = countByTopic.get(topic._id.toString()) || 0;
+      const solvedQuestions = solvedByTopic.get(topic._id.toString()) || 0;
+
+      return {
+        ...topic,
+        totalQuestions,
+        solvedQuestions,
+        progress: totalQuestions
+          ? Math.round((solvedQuestions / totalQuestions) * 100)
+          : 0,
+      };
+    });
 
     res.status(200).json({
       success: true,
-      data: topics,
+      data: enrichedTopics,
     });
   } catch (error) {
     res.status(500).json({
@@ -29,7 +83,14 @@ const getAllTopics = async (req, res) => {
 // ==============================
 const getSingleTopic = async (req, res) => {
   try {
-    const slug = req.params.slug;
+    const { slug } = req.params;
+    const {
+      page = 1,
+      limit = 10,
+      difficulty = "All",
+      pattern = "All",
+      search = "",
+    } = req.query;
 
     const topic = await Topic.findOne({ slug });
 
@@ -40,13 +101,102 @@ const getSingleTopic = async (req, res) => {
       });
     }
 
-    const questions = await Question.find({
+    // Build query filter
+    const query = {
       topic: topic._id,
       isActive: true,
-    })
-      .populate("companies", "name slug")
-      .populate("sheets", "name slug")
-      .sort({ difficulty: 1, title: 1 });
+    };
+
+    if (difficulty !== "All") {
+      query.difficulty = difficulty;
+    }
+
+    if (pattern !== "All") {
+      query.tags = { $in: [pattern] };
+    }
+
+    if (typeof search === "string" && search.trim()) {
+      query.title = {
+        $regex: escapeRegex(search.trim().slice(0, 120)),
+        $options: "i",
+      };
+    }
+
+    const skip = (pageNumber(page) - 1) * pageSize(limit);
+
+    const [questions, total] = await Promise.all([
+      Question.find(query)
+        .populate("companies", "name slug logo color")
+        .populate("sheets", "name slug")
+        .sort({ difficulty: 1, title: 1 })
+        .skip(skip)
+        .limit(pageSize(limit)),
+      Question.countDocuments(query),
+    ]);
+
+    // These totals intentionally ignore pagination, search, and filters so
+    // the summary remains accurate for the complete topic.
+    const topicDifficultyTotals = await Question.aggregate([
+      {
+        $match: {
+          topic: topic._id,
+          isActive: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$difficulty",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const progress = req.user?.id
+      ? await Progress.findOne({ user: req.user.id })
+          .select("solvedQuestions")
+          .lean()
+      : null;
+    const solvedIds = progress?.solvedQuestions || [];
+    const solvedDifficultyTotals = solvedIds.length
+      ? await Question.aggregate([
+          {
+            $match: {
+              _id: { $in: solvedIds },
+              topic: topic._id,
+              isActive: true,
+            },
+          },
+          {
+            $group: {
+              _id: "$difficulty",
+              solved: { $sum: 1 },
+            },
+          },
+        ])
+      : [];
+
+    const difficultyStats = {
+      Easy: { total: 0, solved: 0 },
+      Medium: { total: 0, solved: 0 },
+      Hard: { total: 0, solved: 0 },
+      Unrated: { total: 0, solved: 0 },
+    };
+
+    topicDifficultyTotals.forEach(({ _id, total: count }) => {
+      if (difficultyStats[_id]) difficultyStats[_id].total = count;
+    });
+    solvedDifficultyTotals.forEach(({ _id, solved: count }) => {
+      if (difficultyStats[_id]) difficultyStats[_id].solved = count;
+    });
+
+    const topicTotal = Object.values(difficultyStats).reduce(
+      (sum, item) => sum + item.total,
+      0
+    );
+    const topicSolved = Object.values(difficultyStats).reduce(
+      (sum, item) => sum + item.solved,
+      0
+    );
 
     const { solvedSet, bookmarkedSet } =
       await getUserQuestionFlags(req.user?.id);
@@ -60,6 +210,23 @@ const getSingleTopic = async (req, res) => {
           solvedSet,
           bookmarkedSet
         ),
+        pagination: {
+          total,
+          page: pageNumber(page),
+          pages: Math.ceil(total / pageSize(limit)),
+          limit: pageSize(limit),
+        },
+        stats: {
+          total: topicTotal,
+          solved: topicSolved,
+          progress: topicTotal
+            ? Math.round((topicSolved / topicTotal) * 100)
+            : 0,
+          easy: difficultyStats.Easy,
+          medium: difficultyStats.Medium,
+          hard: difficultyStats.Hard,
+          unrated: difficultyStats.Unrated,
+        },
       },
     });
 
@@ -100,7 +267,7 @@ const updateTopic = async (req, res) => {
     const topic = await Topic.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.status(200).json({

@@ -14,9 +14,9 @@ function UserSidebar() {
   ];
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-800 bg-slate-950 p-4 lg:block">
+    <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-black/10 p-4 lg:block">
 
-      <h1 className="text-xl font-bold mb-6 text-white">
+      <h1 className="mb-6 text-xl font-bold text-white">
         DSA Roadmap
       </h1>
 
@@ -27,8 +27,8 @@ function UserSidebar() {
             to={item.path}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
               location.pathname === item.path
-                ? "bg-cyan-600 text-white"
-                : "text-slate-400 hover:bg-slate-800"
+                ? "bg-[#665cff] text-white shadow-lg shadow-indigo-950/30"
+                : "text-slate-400 hover:bg-white/5 hover:text-white"
             }`}
           >
             <span>{item.icon}</span>

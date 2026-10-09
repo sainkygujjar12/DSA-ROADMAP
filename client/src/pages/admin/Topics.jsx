@@ -28,9 +28,7 @@ function Topics() {
   const [deleteTopicData, setDeleteTopicData] =
     useState(null);
 
-  useEffect(() => {
-    fetchTopics();
-  }, []);
+
 
   const fetchTopics = async () => {
     try {
@@ -43,6 +41,14 @@ function Topics() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    getTopics().then(response => { if (active) setTopics(response.data || []); })
+      .catch(error => console.error(error))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const handleSaveTopic = async (
     formData
@@ -142,7 +148,7 @@ function Topics() {
       )}
 
       {showModal && (
-        <TopicForm
+        <TopicForm key={editingTopic?._id || "new"}
           initialData={editingTopic}
           onClose={() => {
             setShowModal(false);

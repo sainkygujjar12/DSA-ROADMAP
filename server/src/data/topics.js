@@ -1,4 +1,9 @@
 const topics = [
+  { name: "Math & Geometry", slug: "math", icon: "📐", description: "Mathematics, number theory, and geometry problems.", order: 17 },
+  { name: "Data Structure Design", slug: "design", icon: "🛠️", description: "Design and implement data structures.", order: 18 },
+  { name: "Database & SQL", slug: "database", icon: "🗃️", description: "SQL queries and relational database problems.", order: 19 },
+  { name: "Shell", slug: "shell", icon: "💻", description: "Shell scripting and text processing problems.", order: 20 },
+  { name: "Concurrency", slug: "concurrency", icon: "⚙️", description: "Thread coordination and synchronization problems.", order: 21 },
   {
     name: "Arrays",
     slug: "arrays",

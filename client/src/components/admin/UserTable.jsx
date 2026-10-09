@@ -2,7 +2,6 @@ import DataTable from "./DataTable";
 
 function UserTable({
   users,
-  onRoleChange,
   onDelete,
 }) {
   const columns = [
@@ -47,21 +46,12 @@ function UserTable({
         <div className="flex justify-center gap-2">
 
           <button
-            onClick={() =>
-              onRoleChange(user)
-            }
-            className="rounded bg-yellow-600 px-3 py-1 text-sm hover:bg-yellow-700"
-          >
-            {user.role === "admin"
-              ? "Make User"
-              : "Make Admin"}
-          </button>
-
-          <button
+            disabled={user.isOwner}
+            title={user.isOwner ? "Owner account is protected" : "Delete user"}
             onClick={() =>
               onDelete(user)
             }
-            className="rounded bg-red-600 px-3 py-1 text-sm hover:bg-red-700"
+            className="rounded bg-red-600 px-3 py-1 text-sm hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Delete
           </button>

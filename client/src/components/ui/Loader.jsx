@@ -1,9 +1,4 @@
 function Loader() {
-  return (
-    <div className="flex justify-center py-10">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-cyan-500"></div>
-    </div>
-  );
+  return <div className="ui-loader" role="status"><span className="ui-loader-spinner" aria-hidden="true" /><span>Loading…</span></div>;
 }
-
 export default Loader;

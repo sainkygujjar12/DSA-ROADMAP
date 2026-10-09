@@ -1,59 +1,37 @@
-import {
-  SiGoogle,
-  SiMeta,
-  SiApple,
-  SiNetflix,
-  SiUber,
-  SiGoldmansachs,
-} from "react-icons/si";
+import { useState } from "react";
+import { FaBuilding } from "react-icons/fa";
+import logos from "../../data/companyLogos.json";
 
-// Simple Icons has delisted several strict-trademark brand
-// marks (Amazon, Microsoft, Adobe, Flipkart among them), so
-// those fall back to a clean colored monogram instead —
-// same pattern apps like Slack/Linear use for missing logos.
-const BRAND_ICONS = {
-  google: SiGoogle,
-  meta: SiMeta,
-  apple: SiApple,
-  netflix: SiNetflix,
-  uber: SiUber,
-  "goldman-sachs": SiGoldmansachs,
-};
+const sizes = { sm: "h-8 w-8", md: "h-11 w-11", lg: "h-16 w-16" };
 
 function CompanyIcon({ company, size = "md" }) {
-  const Icon = BRAND_ICONS[company?.slug];
-  const color = company?.color || "#06b6d4";
-
-  const sizes = {
-    sm: "h-8 w-8 text-sm",
-    md: "h-11 w-11 text-lg",
-    lg: "h-16 w-16 text-2xl",
-  };
-
-  const iconSizes = {
-    sm: 14,
-    md: 20,
-    lg: 30,
-  };
-
-  if (Icon) {
-    return (
-      <div
-        className={`flex shrink-0 items-center justify-center rounded-xl ${sizes[size]}`}
-        style={{ backgroundColor: `${color}1a` }}
-      >
-        <Icon size={iconSizes[size]} color={color} />
-      </div>
-    );
-  }
+  const [failedSources, setFailedSources] = useState([]);
+  // Some populated API responses include a name but omit the slug.
+  const nameSlug = company?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = company?.slug || nameSlug;
+  const bundledLogo = logos[slug];
+  const src = [bundledLogo, company?.logo].find(url => url && !failedSources.includes(url));
 
   return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-xl font-bold text-white ${sizes[size]}`}
-      style={{ backgroundColor: color }}
+    <span
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/10 bg-white p-1.5 shadow-sm ${sizes[size] || sizes.md}`}
+      title={company?.name}
+      role="img"
+      aria-label={`${company?.name || "Company"} logo`}
     >
-      {company?.name?.charAt(0) || "?"}
-    </div>
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedSources(previous => [...previous, src])}
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        <FaBuilding className="h-3/5 w-3/5 text-slate-500" aria-hidden="true" />
+      )}
+    </span>
   );
 }
 

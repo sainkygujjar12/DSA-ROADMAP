@@ -1,4 +1,5 @@
 import DataTable from "./DataTable";
+import CompanyIcon from "../ui/CompanyIcon";
 
 function QuestionTable({
   questions,
@@ -38,9 +39,14 @@ function QuestionTable({
       label: "Companies",
       render: (question) =>
         question.companies?.length
-          ? question.companies
-              .map((company) => company.name)
-              .join(", ")
+          ? <div className="flex flex-wrap gap-2">
+              {question.companies.map(company => (
+                <span key={company._id || company.name} className="inline-flex items-center gap-1.5">
+                  <CompanyIcon company={company} size="sm" />
+                  {company.name}
+                </span>
+              ))}
+            </div>
           : "-",
     },
     {

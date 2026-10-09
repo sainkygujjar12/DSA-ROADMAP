@@ -1,4 +1,5 @@
 import DataTable from "./DataTable";
+import CompanyIcon from "../ui/CompanyIcon";
 
 function CompanyTable({
   companies,
@@ -10,14 +11,7 @@ function CompanyTable({
       key: "logo",
       label: "Logo",
       render: (company) => (
-        <img
-          src={
-            company.logo ||
-            "https://placehold.co/40x40"
-          }
-          alt={company.name}
-          className="h-10 w-10 rounded-full object-cover"
-        />
+        <CompanyIcon company={company} />
       ),
     },
     {

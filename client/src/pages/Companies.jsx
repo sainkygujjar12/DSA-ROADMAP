@@ -4,12 +4,20 @@ import { Link } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import Loader from "../components/ui/Loader";
 import CompanyIcon from "../components/ui/CompanyIcon";
+import Pagination from "../components/ui/Pagination";
 
 import { getCompanies } from "../services/companyService";
 
 function Companies() {
   const [loading, setLoading] = useState(true);
   const [companies, setCompanies] = useState([]);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const filteredCompanies = companies.filter(company =>
+    company.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+  const pageSize = 24;
+  const visibleCompanies = filteredCompanies.slice((page - 1) * pageSize, page * pageSize);
 
   useEffect(() => {
     async function fetchCompanies() {
@@ -41,66 +49,63 @@ function Companies() {
   return (
     <MainLayout>
       <div className="space-y-8">
-
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold">
-            🏢 Companies
+        <div className="max-w-2xl">
+          <p className="eyebrow-label">Company patterns</p>
+          <h1 className="display-heading text-5xl font-extrabold text-white sm:text-6xl">
+            Practice by company<span className="text-[#7c72ff]">.</span>
           </h1>
-
-          <p className="mt-2 text-slate-400">
-            Practice company-specific interview questions.
+          <p className="mt-4 text-lg leading-8 text-slate-400">
+            Explore company question lists and curated interview practice.
           </p>
         </div>
 
         {/* Empty State */}
-        {companies.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-400">
+        <div className="space-y-3">
+          <label htmlFor="company-search" className="block text-sm text-slate-400">Search companies</label>
+          <input
+            id="company-search"
+            type="search"
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+            placeholder="Search by company name…"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
+          />
+          <p className="text-sm text-slate-400" aria-live="polite">{filteredCompanies.length} of {companies.length} companies</p>
+        </div>
+        {filteredCompanies.length === 0 ? (
+          <div className="theme-surface rounded-2xl border border-white/10 bg-[#242427] p-10 text-center text-slate-400">
             No companies found.
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-
-            {companies.map((company) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {visibleCompanies.map((company) => (
               <Link
                 key={company._id}
                 to={`/companies/${company.slug}`}
-                className="rounded-xl border border-slate-800 bg-slate-900 p-6 transition hover:-translate-y-1 hover:border-cyan-500 hover:shadow-lg"
+                className="theme-surface group rounded-2xl border border-white/10 bg-[#242427] p-5 transition hover:-translate-y-1 hover:border-[#665cff]/70 hover:bg-[#2a2a2e] hover:shadow-xl hover:shadow-black/20"
               >
-
-                {/* Header */}
                 <div className="flex items-center gap-4">
-
                   <CompanyIcon company={company} />
-
-                  <h2 className="text-xl font-bold">
-                    {company.name}
-                  </h2>
-
+                  <h2 className="text-lg font-bold text-white">{company.name}</h2>
                 </div>
 
-                {/* Questions */}
-                <p className="mt-4 text-slate-400">
+                <p className="mt-5 font-mono text-xs text-slate-500">
                   {company.totalQuestions || 0} Questions
                 </p>
-
-                {/* Description */}
                 {company.description && (
-                  <p className="mt-3 text-sm text-slate-500">
+                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-400">
                     {company.description}
                   </p>
                 )}
-
-                {/* CTA */}
-                <div className="mt-6 font-medium text-cyan-500">
-                  Practice →
+                <div className="mt-6 flex items-center justify-between text-sm font-semibold text-[#00c99a]">
+                  <span>Practice</span>
+                  <span className="transition group-hover:translate-x-1">→</span>
                 </div>
-
               </Link>
             ))}
-
           </div>
         )}
+        <Pagination currentPage={page} totalPages={Math.ceil(filteredCompanies.length / pageSize)} onPageChange={setPage} />
 
       </div>
     </MainLayout>

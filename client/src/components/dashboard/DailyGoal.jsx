@@ -3,23 +3,24 @@ import ProgressBar from "../ui/ProgressBar";
 
 function DailyGoal() {
   return (
-    <Card>
+    <Card className="border border-zinc-200 bg-white">
 
-      <h2 className="text-2xl font-bold">
+      <h2 className="text-xl font-bold text-zinc-900">
         Daily Goal
       </h2>
 
-      <p className="mt-2 text-slate-400">
+      <p className="mt-1 text-sm text-zinc-500">
         Solve 5 Questions
       </p>
 
-      <div className="mt-5">
+      <div className="mt-6">
         <ProgressBar value={40} />
       </div>
 
-      <p className="mt-3 text-sm text-slate-400">
-        2 / 5 Completed
-      </p>
+      <div className="mt-3 flex items-center justify-between text-xs font-medium text-zinc-500">
+        <span>2 / 5 Completed</span>
+        <span>40%</span>
+      </div>
 
     </Card>
   );

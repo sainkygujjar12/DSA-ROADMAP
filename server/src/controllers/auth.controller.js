@@ -11,6 +11,8 @@ const {
 const User = require("../models/User");
 const Progress = require("../models/Progress");
 const bcrypt = require("bcryptjs");
+const validate = require("../utils/authValidation");
+const { effectiveRole } = require("../config/admin");
 
 // ==============================
 // REGISTER
@@ -58,7 +60,8 @@ exports.verifyOtp = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: effectiveRole(user),
+        authProvider: user.authProvider,
       },
     });
   } catch (error) {
@@ -105,7 +108,8 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: effectiveRole(user),
+        authProvider: user.authProvider,
       },
     });
   } catch (error) {
@@ -133,7 +137,8 @@ exports.googleLogin = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: effectiveRole(user),
+        authProvider: user.authProvider,
         avatar: user.avatar,
       },
     });
@@ -151,6 +156,12 @@ exports.googleLogin = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, avatar } = req.body;
+    if (name !== undefined && (typeof name !== 'string' || !name.trim() || name.trim().length > 80)) {
+      return res.status(400).json({ success: false, message: 'Name must contain 1–80 characters' });
+    }
+    if (avatar !== undefined && (typeof avatar !== 'string' || avatar.length > 1500000 || (avatar && !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar) && !/^https:\/\//.test(avatar)))) {
+      return res.status(400).json({ success: false, message: 'Choose a valid profile image' });
+    }
 
     const updates = {};
     if (typeof name === "string" && name.trim()) {
@@ -163,7 +174,7 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       updates,
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     ).select("-password");
 
     if (!user) {
@@ -175,15 +186,17 @@ exports.updateProfile = async (req, res) => {
 
     const progress = await Progress.findOne({
       user: req.user.id,
-    }).select("solvedQuestions streak");
+    }).select("solvedQuestions streak bestStreak");
 
     res.status(200).json({
       success: true,
       message: "Profile updated",
       data: {
         ...user.toObject(),
+        role: effectiveRole(user),
         totalSolved: progress?.solvedQuestions?.length || 0,
         streak: progress?.streak || 0,
+        bestStreak: progress?.bestStreak || progress?.streak || 0,
       },
     });
   } catch (error) {
@@ -201,15 +214,15 @@ exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    if (!newPassword || newPassword.length < 6) {
+    try { validate.password(newPassword); } catch (error) {
       return res.status(400).json({
         success: false,
         message:
-          "New password must be at least 6 characters",
+          error.message,
       });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select('+password +tokenVersion');
 
     if (!user) {
       return res.status(404).json({
@@ -227,7 +240,7 @@ exports.changePassword = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(
-      currentPassword || "",
+      typeof currentPassword === 'string' ? currentPassword : "",
       user.password
     );
 
@@ -238,9 +251,21 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
+    const password = await bcrypt.hash(newPassword, 12);
+    // The old hash is a compare-and-swap guard: a concurrent reset or password
+    // change cannot be overwritten by a request that checked an older password.
+    const updated = await User.findOneAndUpdate(
+      { _id: user._id, password: user.password },
+      {
+        $set: { password },
+        $inc: { tokenVersion: 1 },
+        $unset: { resetTokenHash: '', resetTokenExpiry: '', otp: '', otpExpiry: '', otpPurpose: '', otpAttempts: '', otpSentAt: '' },
+      },
+      { returnDocument: 'after' }
+    );
+    if (!updated) {
+      return res.status(409).json({ success: false, message: 'Your password has already changed. Sign in again to continue.' });
+    }
 
     res.status(200).json({
       success: true,
@@ -289,12 +314,14 @@ exports.getMe = async (req, res) => {
 
     const progress = await Progress.findOne({
       user: req.user.id,
-    }).select("solvedQuestions streak");
+    }).select("solvedQuestions streak bestStreak");
 
     const userWithLiveStats = {
       ...user.toObject(),
+        role: effectiveRole(user),
       totalSolved: progress?.solvedQuestions?.length || 0,
       streak: progress?.streak || 0,
+      bestStreak: progress?.bestStreak || progress?.streak || 0,
     };
 
     res.status(200).json({
@@ -313,7 +340,14 @@ exports.getMe = async (req, res) => {
 // ==============================
 exports.forgotPassword = async (req, res) => {
   try {
-    const result = await forgetPassword(req.body);
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+    const result = await forgetPassword(email);
     res.status(200).json({
       success: true,
       message: result.message,

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import DashboardLayout from "../components/layout/DashboardLayout";
+import MainLayout from "../components/layout/MainLayout";
 import Loader from "../components/ui/Loader";
 import TopicHeader from "../components/topic/TopicHeader";
 import CompanyIcon from "../components/ui/CompanyIcon";
@@ -10,7 +10,6 @@ import QuestionTable from "../components/topic/QuestionTable";
 import FilterDropdown from "../components/ui/FilterDropdown";
 
 import { getCompanyBySlug } from "../services/companyService";
-import { getProgress } from "../services/progressService";
 
 function CompanyDetails() {
   const { slug } = useParams();
@@ -27,11 +26,7 @@ function CompanyDetails() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [companyResponse, progressResponse] =
-          await Promise.all([
-            getCompanyBySlug(slug),
-            getProgress(),
-          ]);
+        const companyResponse = await getCompanyBySlug(slug);
 
         const companyData =
           companyResponse?.data?.company || null;
@@ -39,20 +34,8 @@ function CompanyDetails() {
         const questionData =
           companyResponse?.data?.questions || [];
 
-        const solvedIds =
-          progressResponse?.data?.solvedQuestions?.map(
-            (q) => q?._id
-          ) || [];
-
-        const updatedQuestions = questionData.map(
-          (question) => ({
-            ...question,
-            solved: solvedIds.includes(question?._id),
-          })
-        );
-
         setCompany(companyData);
-        setQuestions(updatedQuestions);
+        setQuestions(questionData);
       } catch (error) {
         console.error("CompanyDetails error:", error);
       } finally {
@@ -113,19 +96,19 @@ function CompanyDetails() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <MainLayout>
         <Loader />
-      </DashboardLayout>
+      </MainLayout>
     );
   }
 
   if (!company) {
     return (
-      <DashboardLayout>
+      <MainLayout>
         <h2 className="text-center text-xl">
           Company not found
         </h2>
-      </DashboardLayout>
+      </MainLayout>
     );
   }
 
@@ -136,7 +119,7 @@ function CompanyDetails() {
 
   const header = {
     name: company?.name,
-    description: `${questions.length} Questions`,
+    description: company.description || `${questions.length} Questions`,
     totalQuestions: questions.length,
     easy: questions.filter(
       (q) => q.difficulty === "Easy"
@@ -156,7 +139,7 @@ function CompanyDetails() {
   };
 
   return (
-    <DashboardLayout>
+    <MainLayout>
       {/* Back */}
       <div className="mb-6">
         <Link
@@ -176,6 +159,14 @@ function CompanyDetails() {
       />
 
       {/* Search */}
+      {company.sourceUrl && (
+        <p className="mb-6 text-sm text-slate-400">
+          {company.sourceNote}{" "}
+          <a href={company.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-500 underline">
+            View company question source
+          </a>
+        </p>
+      )}
       <SearchBar
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -207,7 +198,7 @@ function CompanyDetails() {
 
       {/* Table */}
       <QuestionTable questions={filteredQuestions} />
-    </DashboardLayout>
+    </MainLayout>
   );
 }
 

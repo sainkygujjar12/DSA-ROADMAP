@@ -1,92 +1,85 @@
 import {
-  FaCode,
+  FaArrowRight,
   FaBookOpen,
-  FaChartLine,
-  FaBuilding,
-  FaClipboardList,
   FaBookmark,
+  FaBuilding,
+  FaChartLine,
+  FaClipboardList,
+  FaCode,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const features = [
   {
-    icon: <FaCode />,
-    title: "Topic-wise Roadmap",
-    desc: "Master every DSA topic in the correct order.",
+    icon: FaCode,
+    label: "01",
+    title: "Topic-wise roadmap",
+    desc: "A clear path from arrays to dynamic programming, with every next step visible.",
+    href: "/roadmap",
   },
   {
-    icon: <FaBuilding />,
-    title: "Company Questions",
-    desc: "Google, Amazon, Microsoft, Uber & many more.",
+    icon: FaBuilding,
+    label: "02",
+    title: "Company patterns",
+    desc: "See which problems appear most often at the companies you want to join.",
+    href: "/companies",
   },
   {
-    icon: <FaClipboardList />,
-    title: "Curated Sheets",
-    desc: "Blind 75, Striver SDE, NeetCode & more.",
+    icon: FaClipboardList,
+    label: "03",
+    title: "Curated sheets",
+    desc: "Use focused collections when you want a shorter, high-signal practice plan.",
+    href: "/sheets",
   },
   {
-    icon: <FaBookmark />,
-    title: "Bookmarks",
-    desc: "Save important problems for revision.",
+    icon: FaBookmark,
+    label: "04",
+    title: "Bookmarks and notes",
+    desc: "Save tricky questions and write the insight you want to remember next time.",
+    href: "/bookmarks",
   },
   {
-    icon: <FaBookOpen />,
-    title: "Personal Notes",
-    desc: "Write notes for every problem.",
+    icon: FaBookOpen,
+    label: "05",
+    title: "Practice in context",
+    desc: "Open the original problem, explanation, and related questions without losing your place.",
+    href: "/roadmap/arrays",
   },
   {
-    icon: <FaChartLine />,
-    title: "Progress Tracking",
-    desc: "Visualize your learning journey.",
+    icon: FaChartLine,
+    label: "06",
+    title: "Progress that responds",
+    desc: "Your solved count, heatmap, streaks, and difficulty breakdown update as you practice.",
+    href: "/dashboard",
   },
 ];
 
 function Features() {
   return (
-    <section className="bg-slate-950 py-24">
-
-      <div className="mx-auto max-w-7xl px-6">
-
-        <div className="text-center">
-
-          <h2 className="text-4xl font-bold">
-            Everything You Need
-          </h2>
-
-          <p className="mt-4 text-slate-400">
-            A complete platform for interview preparation.
-          </p>
-
+    <section className="landing-section landing-features" aria-labelledby="features-heading">
+      <div className="landing-container">
+        <div className="landing-section-heading">
+          <div>
+            <p className="landing-eyebrow">One focused workspace</p>
+            <h2 id="features-heading">Everything you need to prepare with intent<span>.</span></h2>
+          </div>
+          <p>Less tab switching. More deliberate practice. Every feature is connected to the same learning path.</p>
         </div>
 
-        <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-3xl border border-slate-800 bg-slate-900 p-8 transition hover:-translate-y-2 hover:border-cyan-500"
-            >
-
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-600 to-teal-600 text-3xl">
-
-                {feature.icon}
-
+        <div className="landing-feature-grid">
+          {features.map(({ icon: Icon, label, title, desc, href }) => (
+            <Link key={title} to={href} className="landing-feature-card">
+              <div className="landing-feature-card-top">
+                <span className="landing-feature-icon"><Icon /></span>
+                <span>{label}</span>
               </div>
-
-              <h3 className="text-2xl font-bold">
-                {feature.title}
-              </h3>
-
-              <p className="mt-4 leading-7 text-slate-400">
-                {feature.desc}
-              </p>
-
-            </div>
+              <h3>{title}</h3>
+              <p>{desc}</p>
+              <span className="landing-card-link">Explore <FaArrowRight /></span>
+            </Link>
           ))}
-
         </div>
-
       </div>
-
     </section>
   );
 }

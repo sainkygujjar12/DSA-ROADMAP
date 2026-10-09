@@ -1,0 +1,13 @@
+{
+  "add-and-search-word-data-structure-design": "design-add-and-search-words-data-structure",
+  "implement-strstr": "find-the-index-of-the-first-occurrence-in-a-string",
+  "coin-change-2": "coin-change-ii",
+  "friend-circles": "number-of-provinces",
+  "array-partition-i": "array-partition",
+  "longest-arithmetic-sequence": "longest-arithmetic-subsequence",
+  "increasing-subsequences": "non-decreasing-subsequences",
+  "quad-tree-intersection": "logical-or-of-two-binary-grids-represented-as-quad-trees",
+  "play-with-chips": "minimum-cost-to-move-chips-to-the-same-position",
+  "unique-letter-string": "count-unique-characters-of-all-substrings-of-a-given-string",
+  "last-person-to-fit-in-the-elevator": "last-person-to-fit-in-the-bus"
+}

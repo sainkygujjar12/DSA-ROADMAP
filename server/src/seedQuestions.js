@@ -8,6 +8,12 @@ const Topic = require("./models/Topic");
 const Company = require("./models/Company");
 const Sheet = require("./models/Sheet");
 const Question = require("./models/Question");
+const companyQuestionBackfill = require("./data/companyQuestionBackfill");
+const repository = require("./data/companyRepository.json");
+const slugAliases = require("./data/leetcodeSlugAliases.json");
+const repositoryPremiumSlugs = new Set(require("./data/repositoryPremiumSlugs.json"));
+
+const MIN_COMPANY_QUESTIONS = 100;
 
 // ==========================================
 // Auto-discover every topic file inside
@@ -140,7 +146,7 @@ async function seedQuestions() {
         articleUrl: item.articleUrl || "",
         frequency: item.frequency || 0,
         tags: item.tags || [],
-        isPremium: !!item.isPremium,
+        isPremium: repositoryPremiumSlugs.has(item.slug) || !!item.isPremium,
         isActive: true,
       };
 
@@ -170,6 +176,105 @@ async function seedQuestions() {
       }
     }
 
+    // Backfill company practice lists with questions already in this catalog.
+    // addToSet keeps this safe to run repeatedly and avoids duplicate company
+    // references on a question.
+    let companyLinksAdded = 0;
+    const companyBackfillIssues = [];
+
+    const catalogSlugs = new Set(allQuestions.map(question => question.slug));
+    const companyLists = { ...companyQuestionBackfill };
+    for (const entry of repository.companies) {
+      companyLists[entry.name] = [...new Set([
+        ...(companyLists[entry.name] || []),
+        ...entry.slugs.map(slug => slugAliases[slug] || slug).filter(slug => catalogSlugs.has(slug)),
+      ])];
+    }
+    for (const [companyName, slugs] of Object.entries(companyLists)) {
+      const company = companyByName.get(companyName);
+
+      if (!company) {
+        companyBackfillIssues.push(`Unknown company "${companyName}"`);
+        continue;
+      }
+
+      const result = await Question.updateMany(
+        { slug: { $in: slugs } },
+        { $addToSet: { companies: company._id } }
+      );
+
+      companyLinksAdded += result.modifiedCount || 0;
+
+      const foundSlugs = await Question.find({ slug: { $in: slugs } }).select("slug").lean();
+      const found = new Set(foundSlugs.map((question) => question.slug));
+      slugs
+        .filter((slug) => !found.has(slug))
+        .forEach((slug) => companyBackfillIssues.push(`${companyName}: missing question slug "${slug}"`));
+    }
+
+    // Guarantee a useful practice list for every company without creating
+    // fake questions. Reuse the existing catalog and spread the additions
+    // across difficulty levels so each company gets a balanced list.
+    const catalogQuestions = await Question.find({ isActive: true })
+      .select("_id slug difficulty companies")
+      .sort({ slug: 1 })
+      .lean();
+
+    for (const company of allCompanies.filter((item) => item.isActive !== false)) {
+      // Repository lists must not be padded with unrelated company tags.
+      if (repository.companies.some(entry => entry.slug === company.slug)) continue;
+      const assignedIds = new Set(
+        catalogQuestions
+          .filter((question) => question.companies?.some((id) => id.toString() === company._id.toString()))
+          .map((question) => question._id.toString())
+      );
+
+      const needed = MIN_COMPANY_QUESTIONS - assignedIds.size;
+      if (needed <= 0) continue;
+
+      const candidatesByDifficulty = {
+        Easy: [],
+        Medium: [],
+        Hard: [],
+      };
+
+      catalogQuestions
+        .filter((question) => !assignedIds.has(question._id.toString()))
+        .forEach((question) => {
+          candidatesByDifficulty[question.difficulty]?.push(question);
+        });
+
+      const selected = [];
+      const levels = ["Easy", "Medium", "Hard"];
+      let levelIndex = 0;
+
+      while (selected.length < needed) {
+        let addedThisRound = false;
+
+        for (let attempt = 0; attempt < levels.length; attempt++) {
+          const level = levels[(levelIndex + attempt) % levels.length];
+          const candidate = candidatesByDifficulty[level].shift();
+
+          if (candidate) {
+            selected.push(candidate);
+            levelIndex = (levelIndex + attempt + 1) % levels.length;
+            addedThisRound = true;
+            break;
+          }
+        }
+
+        if (!addedThisRound) break;
+      }
+
+      if (selected.length) {
+        const result = await Question.updateMany(
+          { _id: { $in: selected.map((question) => question._id) } },
+          { $addToSet: { companies: company._id } }
+        );
+        companyLinksAdded += result.modifiedCount || 0;
+      }
+    }
+
     // Keep each Sheet's totalQuestions count in sync
     for (const sheet of allSheets) {
       const count = await Question.countDocuments({
@@ -185,10 +290,21 @@ async function seedQuestions() {
     console.log(`   Created: ${created}`);
     console.log(`   Updated: ${updated}`);
     console.log(`   Skipped: ${skipped}`);
+    console.log(`   Company links added: ${companyLinksAdded}`);
 
-    if (errors.length) {
+    const companyCounts = await Promise.all(
+      allCompanies.map(async (company) => ({
+        name: company.name,
+        count: await Question.countDocuments({ companies: company._id }),
+      }))
+    );
+    console.log(`   Company minimum: ${MIN_COMPANY_QUESTIONS}`);
+    companyCounts.forEach(({ name, count }) => console.log(`   ${name}: ${count}`));
+
+    if (errors.length || companyBackfillIssues.length) {
       console.log("\n⚠️  Issues:");
       errors.forEach((e) => console.log("   - " + e));
+      companyBackfillIssues.forEach((e) => console.log("   - " + e));
     }
 
     process.exit(0);

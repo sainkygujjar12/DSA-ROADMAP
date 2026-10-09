@@ -1,25 +1,26 @@
 import { Navigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../context/AuthContext";
 
 function AdminRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const { user, isAuthenticated, initializing } = useAuth();
 
-  if (!token) {
+  if (initializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#1b1b1d] text-slate-400">
+        Loading your session...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  try {
-    const decoded = jwtDecode(token);
-
-    if (decoded.role !== "admin") {
-      return <Navigate to="/dashboard" replace />;
-    }
-
-    return children;
-  } catch (error) {
-    localStorage.removeItem("token");
+  if (user?.role !== "admin") {
     return <Navigate to="/login" replace />;
   }
+
+  return children;
 }
 
 export default AdminRoute;

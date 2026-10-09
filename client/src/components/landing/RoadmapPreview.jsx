@@ -1,57 +1,57 @@
 import {
   FaArrowRight,
+  FaCode,
+  FaCubes,
   FaLayerGroup,
+  FaProjectDiagram,
+  FaRandom,
+  FaSitemap,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const topics = [
-  "Arrays",
-  "Strings",
-  "Linked List",
-  "Stack",
-  "Queue",
-  "Binary Tree",
-  "BST",
-  "Heap",
-  "Graph",
-  "Trie",
-  "Backtracking",
-  "Dynamic Programming",
+  ["Arrays", "arrays", FaLayerGroup, "Start with the patterns behind most interviews."],
+  ["Strings", "strings", FaCode, "Build confidence with matching and parsing problems."],
+  ["Linked List", "linked-list", FaRandom, "Make pointer movement feel natural."],
+  ["Stack", "stack", FaCubes, "Learn the structure behind monotonic patterns."],
+  ["Trees", "trees", FaSitemap, "Move from traversal to recursive thinking."],
+  ["Graphs", "graph", FaProjectDiagram, "Model relationships and search them cleanly."],
+  ["Heap", "heap", FaLayerGroup, "Choose the right priority structure quickly."],
+  ["Dynamic Programming", "dynamic-programming", FaCode, "Turn repeated work into a reliable method."],
 ];
 
-function RoadmapPreview() {
+function RoadmapPreview({ roadmap }) {
   return (
-    <section className="bg-slate-950 py-24">
-      <div className="mx-auto max-w-7xl px-6">
-
-        <div className="text-center">
-          <h2 className="text-4xl font-bold text-white">
-            Interactive DSA Roadmap
-          </h2>
-
-          <p className="mt-4 text-slate-400">
-            Learn topic by topic with a structured path.
-          </p>
+    <section className="landing-section landing-roadmap-preview" aria-labelledby="roadmap-preview-heading">
+      <div className="landing-container">
+        <div className="landing-section-heading landing-section-heading-centered">
+          <div>
+            <p className="landing-eyebrow">A path you can actually follow</p>
+            <h2 id="roadmap-preview-heading">Start anywhere. Know what comes next<span>.</span></h2>
+          </div>
+          <p>Explore the foundations, then keep moving through the patterns that compound your interview skill.</p>
         </div>
 
-        <div className="mt-16 grid gap-6 md:grid-cols-3 lg:grid-cols-4">
-          {topics.map((topic) => (
-            <div
-              key={topic}
-              className="rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:-translate-y-2 hover:border-cyan-500"
-            >
-              <FaLayerGroup className="text-3xl text-cyan-500" />
-
-              <h3 className="mt-5 text-xl font-bold">
-                {topic}
-              </h3>
-
-              <button className="mt-6 flex items-center gap-2 text-cyan-400 hover:text-cyan-300">
-                Explore <FaArrowRight />
-              </button>
-            </div>
+        <div className="landing-topic-grid">
+          {topics.map(([name, slug, Icon, description]) => (
+            <Link key={slug} to={`/roadmap/${slug}`} className="landing-topic-card">
+              <span className="landing-topic-icon"><Icon /></span>
+              <h3>{name}</h3>
+              <p>{description}</p>
+              <span className="text-sm text-slate-400">
+                {roadmap.loading ? "Loading…" : roadmap.error ? "Progress unavailable" : (() => {
+                  const topic = roadmap.topics.find((item) => item.slug === slug);
+                  return roadmap.isAuthenticated
+                    ? `${topic?.solvedQuestions || 0}/${topic?.totalQuestions || 0} solved`
+                    : `${topic?.totalQuestions || 0} questions`;
+                })()}
+              </span>
+              <span className="landing-card-link">Explore <FaArrowRight /></span>
+            </Link>
           ))}
         </div>
 
+        <Link to="/roadmap" className="landing-outline-button">Open the full roadmap <FaArrowRight /></Link>
       </div>
     </section>
   );

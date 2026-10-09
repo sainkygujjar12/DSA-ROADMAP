@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
+      select: false,
       // Not required for accounts created via Google —
       // they authenticate through Google, not a local password.
       required: function () {
@@ -48,6 +49,12 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    otpPurpose: { type: String, select: false },
+    otpAttempts: { type: Number, default: 0, select: false },
+    otpSentAt: { type: Date, select: false },
+    resetTokenHash: { type: String, select: false },
+    resetTokenExpiry: { type: Date, select: false },
+    tokenVersion: { type: Number, default: 0, select: false },
 
     avatar: {
       type: String,

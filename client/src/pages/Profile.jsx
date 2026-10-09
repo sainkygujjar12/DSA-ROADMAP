@@ -1,395 +1,370 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import DashboardLayout from "../components/layout/DashboardLayout";
-import Loader from "../components/ui/Loader";
-import Button from "../components/ui/Button";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  updateProfile,
-  changePassword,
-} from "../services/authService";
-import { getProgress } from "../services/progressService";
+  FaCamera,
+  FaCheck,
+  FaFire,
+  FaPencilAlt,
+  FaTrophy,
+  FaTrash,
+  FaSlidersH,
+} from "react-icons/fa";
+
+import MainLayout from "../components/layout/MainLayout";
+import Loader from "../components/ui/Loader";
+import ActivityHeatmap from "../components/progress/ActivityHeatmap";
+import { useAuth } from "../context/AuthContext";
+import { updateProfile } from "../services/authService";
+import { getDashboard, invalidateDashboardCache } from "../services/dashboardService";
+import "./workspace.css";
+
+const currentYear = new Date().getFullYear();
+
+const difficultyRows = [
+  { key: "easy", label: "Easy", color: "easy" },
+  { key: "medium", label: "Medium", color: "medium" },
+  { key: "hard", label: "Hard", color: "hard" },
+];
+
+function resizeAvatar(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => reject(new Error("Unable to read that image."));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("That image could not be opened."));
+      image.onload = () => {
+        const size = 360;
+        const scale = Math.min(1, size / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      image.src = reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
 
 function Profile() {
-  const navigate = useNavigate();
-  const { user, refreshUser, logout, login, token } = useAuth();
+  const { user, refreshUser, login, token } = useAuth();
+  const avatarInputRef = useRef(null);
 
   const [loading, setLoading] = useState(!user);
-  const [breakdown, setBreakdown] = useState({
-    easy: 0,
-    medium: 0,
-    hard: 0,
-  });
+  const [breakdown, setBreakdown] = useState({ easy: 0, medium: 0, hard: 0 });
+  const [totalSolved, setTotalSolved] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [activity, setActivity] = useState([]);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [year, setYear] = useState(currentYear);
+  const [loadMessage, setLoadMessage] = useState("");
 
-  // Name editing
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const [nameMessage, setNameMessage] = useState("");
 
-  // Password change
-  const [showPasswordForm, setShowPasswordForm] =
-    useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordMsg, setPasswordMsg] = useState(null);
-  const [savingPassword, setSavingPassword] = useState(false);
+  const applyDashboard = (response) => {
+    const dashboard = response?.data;
+    const stats = dashboard?.stats;
+    if (!stats) return;
+
+    setBreakdown({
+      easy: stats.easySolved || 0,
+      medium: stats.mediumSolved || 0,
+      hard: stats.hardSolved || 0,
+    });
+    setTotalSolved(stats.totalSolved || 0);
+    setTotalQuestions(stats.totalQuestions || 0);
+    setActivity(dashboard.activity || []);
+    setStreak(stats.streak || 0);
+    setBestStreak(stats.bestStreak || stats.streak || 0);
+  };
 
   useEffect(() => {
-    Promise.all([
-      refreshUser(),
-      getProgress().catch(() => null),
-    ])
-      .then(([, progressRes]) => {
-        const p = progressRes?.data;
-        if (p) {
-          setBreakdown({
-            easy: p.easySolved || 0,
-            medium: p.mediumSolved || 0,
-            hard: p.hardSolved || 0,
-          });
-        }
+    let active = true;
+
+    Promise.allSettled([refreshUser(), getDashboard({ force: true })])
+      .then(([userResponse, dashboardResponse]) => {
+        if (!active) return;
+        if (dashboardResponse.status === "fulfilled") applyDashboard(dashboardResponse.value);
+        else setLoadMessage("Your progress is temporarily unavailable. Refresh to try again.");
+        if (userResponse.status === "rejected") setLoadMessage("We could not refresh your account details. Your saved profile is shown below.");
       })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+    // Auth methods are stable for this one-time page load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  useEffect(() => {
+    const refreshProgress = () => {
+      getDashboard({ force: true })
+        .then(applyDashboard)
+        .catch((error) => console.error("Profile progress refresh error:", error));
+    };
+
+    window.addEventListener("progress:updated", refreshProgress);
+    return () => window.removeEventListener("progress:updated", refreshProgress);
+  }, []);
 
   const startEditingName = () => {
     setNameInput(user?.name || "");
+    setNameMessage("");
     setEditingName(true);
   };
 
-  const saveName = async () => {
+  const saveName = async (event) => {
+    event.preventDefault();
     if (!nameInput.trim()) return;
 
     try {
       setSavingName(true);
-      const res = await updateProfile({ name: nameInput.trim() });
-      login(res.data, token);
+      const response = await updateProfile({ name: nameInput.trim() });
+      login(response.data, token);
+      invalidateDashboardCache();
       setEditingName(false);
+      setNameMessage("Your name has been updated.");
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Failed to update name"
-      );
+      setNameMessage(error.response?.data?.message || "Could not update your name. Try again.");
     } finally {
       setSavingName(false);
     }
   };
 
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setPasswordMsg(null);
+  const saveAvatar = async (avatar) => {
+    try {
+      setSavingAvatar(true);
+      setAvatarMessage("");
+      const response = await updateProfile({ avatar });
+      login(response.data, token);
+      invalidateDashboardCache();
+      setAvatarMessage(avatar ? "Profile photo updated." : "Profile photo removed.");
+    } catch (error) {
+      setAvatarMessage(error.response?.data?.message || "Could not update profile photo.");
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarMessage("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarMessage("Please choose an image smaller than 5 MB.");
+      return;
+    }
 
     try {
-      setSavingPassword(true);
-      await changePassword({
-        currentPassword,
-        newPassword,
-      });
-      setPasswordMsg({
-        type: "success",
-        text: "Password updated successfully.",
-      });
-      setCurrentPassword("");
-      setNewPassword("");
+      await saveAvatar(await resizeAvatar(file));
     } catch (error) {
-      setPasswordMsg({
-        type: "error",
-        text:
-          error.response?.data?.message ||
-          "Failed to update password",
-      });
-    } finally {
-      setSavingPassword(false);
+      setAvatarMessage(error.message || "Could not read that image.");
     }
   };
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <MainLayout>
         <Loader />
-      </DashboardLayout>
+      </MainLayout>
     );
   }
 
   if (!user) {
     return (
-      <DashboardLayout>
-        <h2 className="text-center text-white text-2xl">
-          User not found
-        </h2>
-      </DashboardLayout>
+      <MainLayout>
+        <h2 className="text-center text-2xl text-white">User not found</h2>
+      </MainLayout>
     );
   }
 
-  const totalSolved = user.totalSolved || 0;
-  const maxDifficulty =
-    Math.max(breakdown.easy, breakdown.medium, breakdown.hard) ||
-    1;
+  const overallProgress = totalQuestions
+    ? Math.min(100, Math.round((totalSolved / totalQuestions) * 100))
+    : 0;
+  const maxDifficulty = Math.max(
+    breakdown.easy,
+    breakdown.medium,
+    breakdown.hard,
+    1
+  );
+  const yearSolved = activity
+    .filter((entry) => entry.date?.startsWith(`${year}-`))
+    .reduce((sum, entry) => sum + (Number(entry.count) || 0), 0);
 
   return (
-    <DashboardLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
+    <MainLayout>
+      <div className="profile-page">
+        <header className="profile-page-heading">
+          <div>
+            <p className="eyebrow-label">Your progress</p>
+            <h1>Profile<span>.</span></h1>
+            <p>Keep your practice history and progress in one place.</p>
+          </div>
+          <Link to="/settings" className="settings-secondary"><FaSlidersH /> Account settings</Link>
+        </header>
 
-        {/* PROFILE CARD */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        {loadMessage && <p className="profile-data-notice" role="status">{loadMessage}</p>}
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
-
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-2xl font-bold">
+        <div className="profile-layout">
+          <aside className="profile-identity-card">
+            <div className="profile-avatar-section">
+              <div className="profile-avatar-large">
                 {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="h-16 w-16 rounded-full object-cover"
-                  />
+                  <img src={user.avatar} alt={`${user.name}'s profile`} />
                 ) : (
                   user.name?.charAt(0)?.toUpperCase()
                 )}
               </div>
-
-              <div>
-                {editingName ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      value={nameInput}
-                      onChange={(e) =>
-                        setNameInput(e.target.value)
-                      }
-                      autoFocus
-                      className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-lg font-bold text-white focus:border-cyan-500 focus:outline-none"
-                    />
-                    <button
-                      onClick={saveName}
-                      disabled={savingName}
-                      className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
-                    >
-                      {savingName ? "Saving..." : "Save"}
-                    </button>
-                    <button
-                      onClick={() => setEditingName(false)}
-                      className="text-sm text-slate-500 hover:text-slate-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold text-white">
-                      {user.name}
-                    </h1>
-                    <button
-                      onClick={startEditingName}
-                      aria-label="Edit name"
-                      className="text-slate-500 transition hover:text-cyan-400"
-                    >
-                      ✏️
-                    </button>
-                  </div>
-                )}
-
-                <p className="text-slate-400">{user.email}</p>
-
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-400">
-                    {user.authProvider === "google"
-                      ? "🔵 Google Account"
-                      : "✉️ Email Account"}
-                  </span>
-
-                  {user.createdAt && (
-                    <span className="text-xs text-slate-600">
-                      Joined{" "}
-                      {new Date(
-                        user.createdAt
-                      ).toLocaleDateString("en-US", {
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* STATS GRID */}
-        <div className="grid gap-6 md:grid-cols-3">
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <p className="text-slate-400">Total Solved</p>
-            <h2 className="mt-2 text-3xl font-bold text-white">
-              {totalSolved}
-            </h2>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <p className="text-slate-400">Streak</p>
-            <h2 className="mt-2 text-3xl font-bold text-orange-400">
-              🔥 {user.streak || 0}
-            </h2>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <p className="text-slate-400">Role</p>
-            <h2 className="mt-2 text-3xl font-bold text-cyan-400 capitalize">
-              {user.role}
-            </h2>
-          </div>
-
-        </div>
-
-        {/* DIFFICULTY BREAKDOWN */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h3 className="mb-4 font-semibold text-white">
-            Difficulty Breakdown
-          </h3>
-
-          <div className="space-y-3">
-            {[
-              {
-                label: "Easy",
-                value: breakdown.easy,
-                color: "bg-emerald-500",
-              },
-              {
-                label: "Medium",
-                value: breakdown.medium,
-                color: "bg-amber-500",
-              },
-              {
-                label: "Hard",
-                value: breakdown.hard,
-                color: "bg-rose-500",
-              },
-            ].map((row) => (
-              <div key={row.label}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="text-slate-400">
-                    {row.label}
-                  </span>
-                  <span className="text-slate-300">
-                    {row.value}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-800">
-                  <div
-                    className={`h-2 rounded-full ${row.color} transition-all`}
-                    style={{
-                      width: `${
-                        (row.value / maxDifficulty) * 100
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* PASSWORD (local accounts only) */}
-        {user.authProvider !== "google" && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <button
-              onClick={() =>
-                setShowPasswordForm((prev) => !prev)
-              }
-              className="flex w-full items-center justify-between font-semibold text-white"
-            >
-              Change Password
-              <span className="text-slate-500">
-                {showPasswordForm ? "−" : "+"}
-              </span>
-            </button>
-
-            {showPasswordForm && (
-              <form
-                onSubmit={handleChangePassword}
-                className="mt-4 space-y-3"
-              >
-                <input
-                  type="password"
-                  placeholder="Current password"
-                  value={currentPassword}
-                  onChange={(e) =>
-                    setCurrentPassword(e.target.value)
-                  }
-                  required
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
-                />
-
-                <input
-                  type="password"
-                  placeholder="New password (min 6 characters)"
-                  value={newPassword}
-                  onChange={(e) =>
-                    setNewPassword(e.target.value)
-                  }
-                  required
-                  minLength={6}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
-                />
-
-                {passwordMsg && (
-                  <p
-                    className={`text-sm ${
-                      passwordMsg.type === "success"
-                        ? "text-emerald-400"
-                        : "text-rose-400"
-                    }`}
-                  >
-                    {passwordMsg.text}
-                  </p>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  disabled={savingPassword}
+              <div className="profile-photo-actions">
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={savingAvatar}
+                  className="profile-photo-button"
                 >
-                  {savingPassword
-                    ? "Updating..."
-                    : "Update Password"}
-                </Button>
-              </form>
-            )}
-          </div>
-        )}
-
-        {/* DANGER ZONE */}
-        <div className="rounded-2xl border border-rose-900/40 bg-rose-950/10 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-white">
-                Log out
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                You'll need to sign in again to access your
-                dashboard and progress.
-              </p>
+                  <FaCamera /> {savingAvatar ? "Saving..." : "Change photo"}
+                </button>
+                {user.avatar && (
+                  <button
+                    type="button"
+                    onClick={() => saveAvatar("")}
+                    disabled={savingAvatar}
+                    className="profile-remove-photo"
+                  >
+                    <FaTrash /> Remove
+                  </button>
+                )}
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  hidden
+                />
+              </div>
+              {avatarMessage && <p className="profile-avatar-message" role="status">{avatarMessage}</p>}
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="shrink-0 rounded-lg border border-rose-800/60 px-5 py-2.5 text-sm font-medium text-rose-400 transition hover:bg-rose-950/60 hover:text-rose-300"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
+            <div className="profile-identity-copy">
+              {editingName ? (
+                <form className="profile-name-editor" onSubmit={saveName}>
+                  <input
+                    value={nameInput}
+                    onChange={(event) => setNameInput(event.target.value)}
+                    autoFocus
+                    aria-label="Your name"
+                    autoComplete="name"
+                    required
+                    maxLength={80}
+                  />
+                  <button type="submit" disabled={savingName || !nameInput.trim()} aria-label="Save name">
+                    {savingName ? "..." : <FaCheck />}
+                  </button>
+                  <button type="button" onClick={() => setEditingName(false)} aria-label="Cancel editing name">
+                    ×
+                  </button>
+                </form>
+              ) : (
+                <div className="profile-name-row">
+                  <h2>{user.name}</h2>
+                  <button type="button" onClick={startEditingName} aria-label="Edit name">
+                    <FaPencilAlt />
+                  </button>
+                </div>
+              )}
+              {nameMessage && <div className="profile-save-notice" role="status">{nameMessage}</div>}
+              <p>{user.email}</p>
+              <span className="profile-account-badge">
+                {user.authProvider === "google" ? "Google account" : "Email account"}
+              </span>
+            </div>
 
+            <div className="profile-identity-footer">
+              <span>Questions solved</span>
+              <strong>{totalSolved} / {totalQuestions || "—"}</strong>
+            </div>
+          </aside>
+
+          <main className="profile-main-content">
+            <section className="profile-activity-card">
+              <div className="profile-activity-heading">
+                <div>
+                  <p className="eyebrow-label">Your consistency</p>
+                  <h2>Activity heatmap</h2>
+                  <p>{yearSolved} question{yearSolved === 1 ? "" : "s"} solved in {year}.</p>
+                </div>
+                <select value={year} onChange={(event) => setYear(Number(event.target.value))} aria-label="Heatmap year">
+                  {Array.from({ length: 5 }, (_, index) => <option key={currentYear - index}>{currentYear - index}</option>)}
+                </select>
+              </div>
+              <ActivityHeatmap activity={activity} year={year} />
+            </section>
+
+            <section className="profile-stat-grid">
+              <div className="profile-stat-card profile-stat-total">
+                <div className="profile-stat-copy">
+                  <span>Total solved</span>
+                  <strong>{totalSolved} <small>/ {totalQuestions || "—"}</small></strong>
+                  <em>{overallProgress}% complete</em>
+                </div>
+                <div className="profile-stat-ring" style={{ "--progress": `${overallProgress * 3.6}deg` }}>
+                  <span>{overallProgress}%</span>
+                </div>
+              </div>
+              <div className="profile-stat-card">
+                <span>Current streak</span>
+                <strong className="orange"><FaFire /> {streak}</strong>
+                <em>consecutive days</em>
+              </div>
+              <div className="profile-stat-card">
+                <span>Best streak</span>
+                <strong className="cyan"><FaTrophy /> {bestStreak}</strong>
+                <em>days your best</em>
+              </div>
+            </section>
+
+            <section className="profile-difficulty-card">
+              <div className="profile-section-title">
+                <div>
+                  <p className="eyebrow-label">Solved questions</p>
+                  <h2>Difficulty breakdown</h2>
+                </div>
+                <strong>{totalSolved} total</strong>
+              </div>
+              <div className="profile-difficulty-list">
+                {difficultyRows.map((row) => (
+                  <div className="profile-difficulty-row" key={row.key}>
+                    <div><span className={row.color}>{row.label}</span><strong>{breakdown[row.key]}</strong></div>
+                    <div className="profile-difficulty-track"><span className={row.color} style={{ width: `${(breakdown[row.key] / maxDifficulty) * 100}%` }} /></div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </main>
+        </div>
       </div>
-    </DashboardLayout>
+    </MainLayout>
   );
 }
 

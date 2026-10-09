@@ -14,76 +14,40 @@ function QuestionForm({
   const [companies, setCompanies] = useState([]);
   const [sheets, setSheets] = useState([]);
 
-  const [form, setForm] = useState({
-    title: "",
-    slug: "",
-    difficulty: "Easy",
-    topic: "",
-    companies: [],
-    sheets: [],
-    leetcodeUrl: "",
-    gfgUrl: "",
-    youtubeUrl: "",
-    articleUrl: "",
-  });
-
-  useEffect(() => {
-    loadOptions();
-  }, []);
-
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        title: initialData.title || "",
-        slug: initialData.slug || "",
-        difficulty: initialData.difficulty || "Easy",
+  const [form, setForm] = useState(() => ({
+        title: initialData?.title || "",
+        slug: initialData?.slug || "",
+        difficulty: initialData?.difficulty || "Easy",
         topic:
-          initialData.topic?._id ||
-          initialData.topic ||
+          initialData?.topic?._id ||
+          initialData?.topic ||
           "",
-        companies: (initialData.companies || []).map(
+        companies: (initialData?.companies || []).map(
           (c) => c._id || c
         ),
-        sheets: (initialData.sheets || []).map(
+        sheets: (initialData?.sheets || []).map(
           (s) => s._id || s
         ),
-        leetcodeUrl: initialData.leetcodeUrl || "",
-        gfgUrl: initialData.gfgUrl || "",
-        youtubeUrl: initialData.youtubeUrl || "",
-        articleUrl: initialData.articleUrl || "",
-      });
-    } else {
-      setForm({
-        title: "",
-        slug: "",
-        difficulty: "Easy",
-        topic: "",
-        companies: [],
-        sheets: [],
-        leetcodeUrl: "",
-        gfgUrl: "",
-        youtubeUrl: "",
-        articleUrl: "",
-      });
-    }
-  }, [initialData]);
+        leetcodeUrl: initialData?.leetcodeUrl || "",
+        gfgUrl: initialData?.gfgUrl || "",
+        resourceUrl: initialData?.resourceUrl || "",
+        kind: initialData?.kind || "problem",
+        youtubeUrl: initialData?.youtubeUrl || "",
+        articleUrl: initialData?.articleUrl || "",
+      }));
 
-  const loadOptions = async () => {
-    try {
-      const [topicsRes, companiesRes, sheetsRes] =
-        await Promise.all([
-          getTopics(),
-          getCompanies(),
-          getSheets(),
-        ]);
 
-      setTopics(topicsRes.data);
-      setCompanies(companiesRes.data);
-      setSheets(sheetsRes.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
+
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getTopics(), getCompanies(), getSheets()]).then(([topics, companies, sheets]) => {
+      if (!active) return;
+      setTopics(topics.data); setCompanies(companies.data); setSheets(sheets.data);
+    }).catch(error => console.error(error));
+    return () => { active = false; };
+  }, []);
 
   // ==========================
   // Auto Slug Generator
@@ -105,7 +69,7 @@ function QuestionForm({
       setForm((prev) => ({
         ...prev,
         title: value,
-        slug: generateSlug(value),
+        slug: initialData ? prev.slug : generateSlug(value),
       }));
       return;
     }
@@ -153,10 +117,10 @@ function QuestionForm({
       !form.title ||
       !form.slug ||
       !form.topic ||
-      (!form.leetcodeUrl && !form.gfgUrl)
+      (!form.leetcodeUrl && !form.gfgUrl && !form.resourceUrl)
     ) {
       alert(
-        "Please fill all required fields (and at least one of LeetCode/GFG URL)."
+        "Please fill all required fields and include a practice or study URL."
       );
       return;
     }
@@ -233,6 +197,7 @@ function QuestionForm({
                 <option value="Easy">Easy</option>
                 <option value="Medium">Medium</option>
                 <option value="Hard">Hard</option>
+                <option value="Unrated">Unrated</option>
               </select>
             </div>
 
@@ -295,6 +260,12 @@ function QuestionForm({
             />
           </div>
 
+          <label className="block">Practice or study resource URL
+            <input type="url" name="resourceUrl" value={form.resourceUrl} onChange={handleChange} placeholder="https://..." className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 p-3" />
+          </label>
+          <label className="block">Entry type
+            <select name="kind" value={form.kind} onChange={handleChange} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 p-3"><option value="problem">Problem</option><option value="concept">Concept</option></select>
+          </label>
           <div className="grid grid-cols-2 gap-4">
 
             <div>

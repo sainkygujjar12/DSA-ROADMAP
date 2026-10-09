@@ -1,50 +1,49 @@
 import { useEffect, useState } from "react";
+import { FaArrowUp, FaBolt, FaBuilding, FaCode, FaLayerGroup } from "react-icons/fa";
 import { getStats } from "../../services/statsService";
 
 function Stats() {
   const [stats, setStats] = useState([
-    { number: "—", title: "Questions" },
-    { number: "—", title: "Companies" },
-    { number: "—", title: "Topics" },
-    { number: "—", title: "Sheets" },
+    { number: "—", title: "Questions", icon: FaCode },
+    { number: "—", title: "Companies", icon: FaBuilding },
+    { number: "—", title: "Topics", icon: FaLayerGroup },
+    { number: "—", title: "Sheets", icon: FaBolt },
   ]);
 
   useEffect(() => {
     getStats()
       .then((res) => {
-        const d = res.data;
+        const data = res.data;
         setStats([
-          { number: `${d.totalQuestions}+`, title: "Questions" },
-          { number: `${d.totalCompanies}+`, title: "Companies" },
-          { number: `${d.totalTopics}+`, title: "Topics" },
-          { number: `${d.totalSheets}+`, title: "Sheets" },
+          { number: `${data.totalQuestions}+`, title: "Questions", icon: FaCode },
+          { number: `${data.totalCompanies}+`, title: "Companies", icon: FaBuilding },
+          { number: `${data.totalTopics}+`, title: "Topics", icon: FaLayerGroup },
+          { number: `${data.totalSheets}+`, title: "Sheets", icon: FaBolt },
         ]);
       })
       .catch((err) => console.error(err));
   }, []);
 
   return (
-    <section className="bg-slate-900 py-24">
-
-      <div className="mx-auto grid max-w-7xl gap-8 px-6 md:grid-cols-2 lg:grid-cols-4">
-
-        {stats.map((stat) => (
-          <div
-            key={stat.title}
-            className="rounded-2xl border border-slate-800 bg-slate-950 p-10 text-center"
-          >
-            <h2 className="text-5xl font-bold text-cyan-500">
-              {stat.number}
-            </h2>
-
-            <p className="mt-4 text-lg text-slate-400">
-              {stat.title}
-            </p>
+    <section className="landing-metrics" aria-label="Platform statistics">
+      <div className="landing-container">
+        <div className="landing-metrics-heading">
+          <div>
+            <p className="landing-eyebrow">Built to compound</p>
+            <h2>Small sessions. Measurable progress<span>.</span></h2>
           </div>
-        ))}
-
+          <FaArrowUp aria-hidden="true" />
+        </div>
+        <div className="landing-metrics-grid">
+          {stats.map(({ number, title, icon: Icon }) => (
+            <div key={title} className="landing-metric-card">
+              <Icon />
+              <strong>{number}</strong>
+              <span>{title}</span>
+            </div>
+          ))}
+        </div>
       </div>
-
     </section>
   );
 }

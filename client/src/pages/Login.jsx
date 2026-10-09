@@ -1,207 +1,211 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
+import AuthShell from "../components/auth/AuthShell";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
+import { useAuth } from "../context/AuthContext";
 import {
   loginUser,
-  verifyOtp,
   resendOtp,
+  verifyOtp,
 } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
-import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const [needsVerification, setNeedsVerification] =
-    useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+  useEffect(() => {
+    if (resendCooldown <= 0) return undefined;
+    const timer = setInterval(() => {
+      setResendCooldown((value) => Math.max(value - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleChange = (event) => {
+    setForm((value) => ({ ...value, [event.target.name]: event.target.value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError("");
 
     try {
       setSubmitting(true);
       const response = await loginUser(form);
-
       login(response.data, response.token);
       navigate("/dashboard");
-    } catch (error) {
-      const message =
-        error.response?.data?.message || "Login failed";
-
+    } catch (requestError) {
+      const message = requestError.response?.data?.message || "Login failed";
       setError(message);
-
       if (message.toLowerCase().includes("verify")) {
         setNeedsVerification(true);
-        // Removed automatic resendOtp(form.email) to prevent SMTP lag and spam.
-        // Users can manually request a resend on the verification page if needed.
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
+  const handleVerify = async (event) => {
+    event.preventDefault();
     setError("");
 
     try {
       setSubmitting(true);
-      const res = await verifyOtp({
-        email: form.email,
-        otp,
-      });
-
-      login(res.data, res.token);
+      const response = await verifyOtp({ email: form.email, otp });
+      login(response.data, response.token);
       navigate("/dashboard");
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Verification failed"
-      );
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Verification failed");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleResend = async () => {
+    setError("");
+    try {
+      setResending(true);
+      await resendOtp(form.email);
+      setResendCooldown(30);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Failed to resend code");
+    } finally {
+      setResending(false);
+    }
+  };
+
   if (needsVerification) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="w-full max-w-md rounded-xl bg-slate-900 p-8">
-          <h1 className="mb-2 text-center text-3xl font-bold text-white">
-            Verify your email
-          </h1>
+      <AuthShell
+        eyebrow="Almost there"
+        title="Verify your email"
+        description={`Enter the 6-digit code sent to ${form.email}.`}
+      >
+        {location.state?.message && <p role="status" className="settings-notice">{location.state.message}</p>}
+      <form onSubmit={handleVerify} className="space-y-5">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="000000"
+            value={otp}
+            onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            required
+            maxLength={6}
+            className="auth-input w-full rounded-xl px-4 py-4 text-center text-2xl tracking-[0.5em]"
+          />
 
-          <p className="mb-6 text-center text-sm text-slate-400">
-            We've sent a fresh 6-digit code to{" "}
-            <span className="text-slate-200">
-              {form.email}
-            </span>
-          </p>
-
-          <form onSubmit={handleVerify} className="space-y-4">
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="000000"
-              value={otp}
-              onChange={(e) =>
-                setOtp(
-                  e.target.value.replace(/\D/g, "").slice(0, 6)
-                )
-              }
-              required
-              maxLength={6}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-center text-2xl tracking-[0.5em] text-white"
-            />
-
-            {error && (
-              <p className="text-sm text-rose-400">{error}</p>
-            )}
-
-            <button
-              disabled={submitting || otp.length !== 6}
-              className="w-full rounded-lg bg-cyan-600 py-3 text-white hover:bg-cyan-500 disabled:opacity-50"
-            >
-              {submitting ? "Verifying..." : "Verify"}
-            </button>
-          </form>
+          {error && <p className="text-sm text-rose-400">{error}</p>}
 
           <button
+            disabled={submitting || otp.length !== 6}
+            className="w-full rounded-xl bg-[#665cff] py-3.5 font-semibold text-white transition hover:bg-[#756cff] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {submitting ? "Verifying..." : "Verify email"}
+          </button>
+        </form>
+
+        <div className="mt-5 flex items-center justify-between text-sm">
+          {resendCooldown > 0 ? (
+            <span className="text-slate-500">Resend code in {resendCooldown}s</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="text-[#00c99a] hover:underline disabled:opacity-50"
+            >
+              {resending ? "Sending..." : "Resend code"}
+            </button>
+          )}
+          <button
+            type="button"
             onClick={() => {
               setNeedsVerification(false);
               setError("");
             }}
-            className="mt-4 w-full text-center text-sm text-slate-500 hover:text-slate-300"
+            className="text-slate-500 transition hover:text-white"
           >
-            ← Back to login
+            Back to login
           </button>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950">
-      <div className="w-full max-w-md rounded-xl bg-slate-900 p-8">
-
-        <h1 className="mb-6 text-center text-3xl font-bold text-white">
-          Login
-        </h1>
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
-
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Log in to your roadmap"
+      description="Pick up where you left off and keep your preparation moving."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <label className="block text-sm font-medium text-slate-300">
+          Email address
           <input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder="you@example.com"
             value={form.email}
             onChange={handleChange}
             required
-            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-white"
+            className="auth-input mt-2 w-full rounded-xl px-4 py-3.5"
           />
+        </label>
 
+        <label className="block text-sm font-medium text-slate-300">
+          Password
           <input
             type="password"
             name="password"
-            placeholder="Password"
+            placeholder="Enter your password"
             value={form.password}
             onChange={handleChange}
             required
-            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-white"
+            className="auth-input mt-2 w-full rounded-xl px-4 py-3.5"
           />
+        </label>
 
-          {error && (
-            <p className="text-sm text-rose-400">{error}</p>
-          )}
-
-          <button
-            disabled={submitting}
-            className="w-full rounded-lg bg-cyan-600 py-3 text-white hover:bg-cyan-500 disabled:opacity-50"
-          >
-            {submitting ? "Logging in..." : "Login"}
-          </button>
-
-        </form>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-800" />
-          <span className="text-xs text-slate-500">OR</span>
-          <div className="h-px flex-1 bg-slate-800" />
+        <div className="flex justify-end">
+          <Link to="/forgot-password" className="text-sm text-[#00c99a] hover:underline">
+            Forgot password?
+          </Link>
         </div>
 
-        <GoogleAuthButton />
+        {error && <p className="text-sm text-rose-400">{error}</p>}
 
-        <p className="mt-6 text-center text-slate-400">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="text-cyan-500"
-          >
-            Register
-          </Link>
-        </p>
+        <button
+          disabled={submitting}
+          className="w-full rounded-xl bg-[#665cff] py-3.5 font-semibold text-white transition hover:bg-[#756cff] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting ? "Logging in..." : "Continue"}
+        </button>
+      </form>
 
+      <div className="my-7 flex items-center gap-3">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="text-xs uppercase tracking-widest text-slate-500">or</span>
+        <div className="h-px flex-1 bg-white/10" />
       </div>
-    </div>
+
+      <GoogleAuthButton />
+
+      <p className="mt-7 text-center text-sm text-slate-400">
+        Don&apos;t have an account?{" "}
+        <Link to="/register" className="font-medium text-[#00c99a] hover:underline">
+          Create one
+        </Link>
+      </p>
+    </AuthShell>
   );
 }
 

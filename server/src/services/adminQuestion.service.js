@@ -1,3 +1,4 @@
+const { escapeRegex, pageSize, pageNumber } = require("../utils/queryValidation");
 const Question = require("../models/Question");
 const Topic = require("../models/Topic");
 const Company = require("../models/Company");
@@ -14,11 +15,13 @@ exports.getQuestions = async ({
   search = "",
   difficulty = "",
 }) => {
+  page = pageNumber(page);
+  limit = pageSize(limit);
   const query = {};
 
   if (search) {
     query.title = {
-      $regex: search,
+      $regex: escapeRegex(String(search).slice(0, 120)),
       $options: "i",
     };
   }
@@ -78,7 +81,7 @@ exports.updateQuestion = async (
     id,
     data,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     }
   );

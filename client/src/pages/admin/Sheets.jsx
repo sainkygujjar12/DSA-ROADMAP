@@ -28,7 +28,6 @@ function Sheets() {
   // ==============================
   const fetchSheets = async () => {
     try {
-      setLoading(true);
 
       const response = await getSheets();
 
@@ -42,7 +41,11 @@ function Sheets() {
   };
 
   useEffect(() => {
-    fetchSheets();
+    let active = true;
+    getSheets().then(response => { if (active) setSheets(response.data || []); })
+      .catch(error => console.error(error))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   // ==============================
@@ -142,7 +145,7 @@ function Sheets() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <SheetForm
+        <SheetForm key={editingSheet?._id || "new"}
           initialData={editingSheet}
           onClose={() => {
             setShowModal(false);

@@ -3,44 +3,41 @@ import Card from "../ui/Card";
 
 function RecentActivity({ recentSolved = [] }) {
   return (
-    <Card className="border border-slate-800 bg-slate-900">
+    <Card className="border border-zinc-200 bg-white">
 
-      <h2 className="mb-6 text-2xl font-bold">
+      <h2 className="mb-6 text-xl font-bold text-zinc-900">
         🕒 Recently Solved
       </h2>
 
       {recentSolved.length === 0 ? (
-        <div className="rounded-lg bg-slate-800 p-6 text-center text-slate-400">
+        <div className="rounded-lg bg-zinc-50 p-6 text-center text-zinc-500 border border-zinc-100">
           No solved questions yet.
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
 
           {recentSolved.map((question) => (
             <Link
               key={question._id}
               to={`/questions/${question.slug}`}
-              className="block rounded-lg bg-slate-800 p-4 transition hover:bg-slate-700"
+              className="block rounded-lg bg-white border border-zinc-100 p-4 transition hover:bg-zinc-50 hover:border-zinc-300"
             >
               <div className="flex items-center justify-between">
 
-                <div>
-                  <h3 className="font-semibold">
-                    ✅ {question.title}
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-500">✅</span>
+                  <h3 className="font-medium text-zinc-900">
+                    {question.title}
                   </h3>
-
-                  <p className="mt-1 text-sm text-slate-400">
-                    {question.difficulty}
-                  </p>
                 </div>
 
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  className={`rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                     question.difficulty === "Easy"
-                      ? "bg-green-500/20 text-green-400"
+                      ? "bg-emerald-100 text-emerald-700"
                       : question.difficulty === "Medium"
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : "bg-red-500/20 text-red-400"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-rose-100 text-rose-700"
                   }`}
                 >
                   {question.difficulty}

@@ -66,8 +66,11 @@ exports.getDashboardStats = async (userId) => {
         mediumSolved: 0,
         hardSolved: 0,
         streak: 0,
+        bestStreak: 0,
         overallProgress: 0,
       },
+
+      activity: [],
 
       continueLearning: null,
 
@@ -119,6 +122,9 @@ exports.getDashboardStats = async (userId) => {
       streak:
         progress.streak,
 
+      bestStreak:
+        progress.bestStreak || progress.streak || 0,
+
       overallProgress,
     },
 
@@ -135,5 +141,7 @@ exports.getDashboardStats = async (userId) => {
 
     notesCount:
       progress.notes.length,
+
+    activity: progress.activity || [],
   };
 };

@@ -36,7 +36,7 @@ exports.getQuestionsByTopic = async (slug) => {
     topic: topic._id,
   })
     .populate("topic", "name slug icon")
-    .populate("companies", "name logo")
+    .populate("companies", "name slug logo color")
     .populate("sheets", "name")
     .sort({
       title: 1,
@@ -50,8 +50,8 @@ exports.getQuestionsByTopic = async (slug) => {
 exports.getQuestionBySlug = async (slug) => {
   return await Question.findOne({ slug })
     .populate("topic", "name slug")
-    .populate("companies", "name logo")
-    .populate("sheets", "name");
+    .populate("companies", "name slug logo color")
+    .populate("sheets", "name slug");
 };
 
 // ======================================
@@ -63,7 +63,7 @@ exports.updateQuestion = async (id, data) => {
     id,
     data,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     }
   );

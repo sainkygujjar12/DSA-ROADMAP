@@ -27,9 +27,7 @@ function Questions() {
 
   const [deleteQuestionData, setDeleteQuestionData] = useState(null);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
+
 
   const fetchQuestions = async () => {
     try {
@@ -41,6 +39,14 @@ function Questions() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    getQuestions().then(response => { if (active) setQuestions(response.data || []); })
+      .catch(error => console.error(error))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const handleSaveQuestion = async (formData) => {
     try {
@@ -185,7 +191,7 @@ function Questions() {
       )}
 
       {showModal && (
-        <QuestionForm
+        <QuestionForm key={editingQuestion?._id || "new"}
           initialData={editingQuestion}
           onClose={() => {
             setShowModal(false);

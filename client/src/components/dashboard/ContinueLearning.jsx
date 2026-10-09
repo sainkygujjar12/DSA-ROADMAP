@@ -7,12 +7,12 @@ import ProgressBar from "../ui/ProgressBar";
 function ContinueLearning({ data, progress }) {
   if (!data || !data.title) {
     return (
-      <Card>
-        <h2 className="text-2xl font-bold">
+      <Card className="border border-zinc-200 bg-white">
+        <h2 className="text-xl font-bold text-zinc-900">
           Continue Learning
         </h2>
 
-        <p className="mt-4 text-slate-400">
+        <p className="mt-4 text-sm text-zinc-500">
           You haven't started solving questions yet.
         </p>
       </Card>
@@ -20,22 +20,21 @@ function ContinueLearning({ data, progress }) {
   }
 
   return (
-    <Card className="border border-slate-800 bg-slate-900">
+    <Card className="border border-zinc-200 bg-white">
 
-      <h2 className="text-2xl font-bold">
-        ▶ Continue Learning
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-zinc-900">
+          ▶ Continue Learning
+        </h2>
+        <span className="text-xs font-medium text-zinc-400">Last Visited</span>
+      </div>
 
-      <p className="mt-6 text-sm text-slate-400">
-        Last Visited Question
-      </p>
-
-      <h3 className="mt-2 text-2xl font-semibold">
+      <h3 className="mt-6 text-2xl font-semibold text-zinc-900">
         {data.title}
       </h3>
 
-      <p className="mt-2 text-slate-400">
-        Difficulty : {data.difficulty}
+      <p className="mt-2 text-sm text-zinc-500">
+        Difficulty : <span className="font-medium text-zinc-700">{data.difficulty}</span>
       </p>
 
       <div className="mt-8">

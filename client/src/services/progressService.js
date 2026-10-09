@@ -1,4 +1,10 @@
 import api from "./api";
+import { invalidateDashboardCache } from "./dashboardService";
+
+let progressCache = null;
+let progressCacheToken = null;
+let progressCacheTime = 0;
+const PROGRESS_CACHE_TTL = 15_000;
 
 // =====================================
 // Helper
@@ -14,13 +20,39 @@ const getAuthConfig = () => ({
 // Get Progress
 // =====================================
 
-export const getProgress = async () => {
+export const getProgress = async ({ force = false } = {}) => {
+  const token = localStorage.getItem("token") || "guest";
+  const cacheIsFresh = Date.now() - progressCacheTime < PROGRESS_CACHE_TTL;
+
+  if (!force && progressCache && progressCacheToken === token && cacheIsFresh) {
+    return progressCache;
+  }
+
   const response = await api.get(
     "/progress",
     getAuthConfig()
   );
 
-  return response.data;
+  progressCache = response.data;
+  progressCacheToken = token;
+  progressCacheTime = Date.now();
+  return progressCache;
+};
+
+const invalidateProgressCache = () => {
+  progressCache = null;
+  progressCacheToken = null;
+  progressCacheTime = 0;
+};
+
+const notifyProgressUpdated = (response) => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("progress:updated", {
+        detail: response?.data || null,
+      })
+    );
+  }
 };
 
 // =====================================
@@ -36,6 +68,9 @@ export const toggleQuestionSolved = async (
     getAuthConfig()
   );
 
+  invalidateProgressCache();
+  invalidateDashboardCache();
+  notifyProgressUpdated(response.data);
   return response.data;
 };
 
@@ -52,6 +87,7 @@ export const updateLastVisited = async (
     getAuthConfig()
   );
 
+  invalidateProgressCache();
   return response.data;
 };
 
@@ -69,6 +105,9 @@ export const toggleBookmark = async (
     getAuthConfig()
   );
 
+  invalidateProgressCache();
+  invalidateDashboardCache();
+  notifyProgressUpdated(response.data);
   return response.data;
 };
 
@@ -87,6 +126,7 @@ export const saveNotes = async (
     getAuthConfig()
   );
 
+  invalidateProgressCache();
   return response.data;
 };
 // =====================================
@@ -101,5 +141,6 @@ export const deleteNote = async (
     getAuthConfig()
   );
 
+  invalidateProgressCache();
   return response.data;
 };

@@ -1,9 +1,9 @@
 const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  console.error(`Request failed (${err.name})`);
 
   res.status(err.statusCode || 500).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: process.env.NODE_ENV === "production" && (!err.statusCode || err.statusCode >= 500) ? "Unable to complete request" : err.message || "Internal Server Error",
   });
 };
 

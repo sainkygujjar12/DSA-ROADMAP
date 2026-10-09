@@ -16,14 +16,13 @@ exports.getSheets = async () => {
 
   const result = await Promise.all(
     sheets.map(async (sheet) => {
-      const totalQuestions =
-        await Question.countDocuments({
-          sheets: sheet._id,
-        });
+      const totalQuestions = sheet.entries?.length || await Question.countDocuments({ sheets: sheet._id });
+      const { entries, ...metadata } = sheet.toObject();
 
       return {
-        ...sheet.toObject(),
+        ...metadata,
         totalQuestions,
+        sectionCount: new Set((entries || []).map(entry => entry.section)).size,
       };
     })
   );
@@ -41,15 +40,18 @@ exports.getSheetBySlug = async (slug, userId) => {
   });
 
   if (!sheet) {
-    throw new Error("Sheet not found");
+    const error = new Error("Sheet not found");
+    error.statusCode = 404;
+    throw error;
   }
 
-  const questions = await Question.find({
-    sheets: sheet._id,
-  })
+  const orderedEntries = [...(sheet.entries || [])].sort((a, b) => a.order - b.order);
+  const questions = await Question.find(orderedEntries.length
+    ? { _id: { $in: orderedEntries.map(entry => entry.question) } }
+    : { sheets: sheet._id })
     .populate("topic", "name slug icon")
-    .populate("companies", "name logo")
-    .populate("sheets", "name")
+    .populate("companies", "name slug logo color")
+    .populate("sheets", "name slug")
     .sort({
       difficulty: 1,
       title: 1,
@@ -58,13 +60,25 @@ exports.getSheetBySlug = async (slug, userId) => {
   const { solvedSet, bookmarkedSet } =
     await getUserQuestionFlags(userId);
 
+  const flagged = attachUserFlags(questions, solvedSet, bookmarkedSet);
+  const byId = new Map(flagged.map(question => [question._id.toString(), question]));
+  const { entries, ...metadata } = sheet.toObject();
   return {
-    sheet,
-    questions: attachUserFlags(
-      questions,
-      solvedSet,
-      bookmarkedSet
-    ),
+    sheet: { ...metadata, totalQuestions: entries?.length || questions.length },
+    questions: orderedEntries.length ? orderedEntries.map(entry => {
+      const question = byId.get(entry.question.toString());
+      if (!question) throw new Error("A sheet entry is unavailable. Please restore its question before publishing.");
+      return {
+        ...question,
+        title: entry.title,
+        entryKey: `${sheet.slug}:${entry.order}`,
+        sourceOrder: entry.order,
+        section: entry.section,
+        kind: entry.kind,
+        resourceUrl: entry.resourceUrl,
+        sourceUrl: entry.sourceUrl,
+      };
+    }) : flagged,
   };
 };
 
@@ -85,7 +99,7 @@ exports.updateSheet = async (id, data) => {
     id,
     data,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     }
   );

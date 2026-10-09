@@ -1,12 +1,16 @@
 import { Link } from "react-router-dom";
+import { FaRocket } from "react-icons/fa";
 
-function Logo() {
+function Logo({ className = "" }) {
   return (
     <Link
       to="/"
-      className="text-2xl font-extrabold text-cyan-500"
+      className={`brand-logo ${className}`.trim()}
     >
-      DSA Roadmap
+      <span className="brand-logo-mark" aria-hidden="true">
+        <FaRocket />
+      </span>
+      <span>DSA Roadmap</span>
     </Link>
   );
 }

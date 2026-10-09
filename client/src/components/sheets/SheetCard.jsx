@@ -1,44 +1,41 @@
 import { Link } from "react-router-dom";
+import { FaArrowRight } from "react-icons/fa";
+import { FiBookOpen, FiCode, FiLayers, FiTarget, FiZap } from "react-icons/fi";
+
+const SHEET_META = {
+  "blind-75": { icon: FiTarget, color: "#15c39a" },
+  "neetcode-150": { icon: FiCode, color: "#f59e0b" },
+  "neetcode-250": { icon: FiCode, color: "#fb3b76" },
+  "love-babbar-sheet": { icon: FiBookOpen, color: "#8b5cf6" },
+  "striver-sde-sheet": { icon: FiLayers, color: "#13b8df" },
+  "grind-169": { icon: FiZap, color: "#13b8df" },
+};
 
 function SheetCard({ sheet }) {
+  const meta = SHEET_META[sheet.slug] || { icon: FiBookOpen, color: "#10c88d" };
+  const Icon = meta.icon;
+
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:-translate-y-2 hover:border-cyan-500">
-
-      {/* Title */}
-      <h2 className="text-2xl font-bold text-white">
-        📋 {sheet.name}
-      </h2>
-
-      {/* Author */}
-      {sheet.author && (
-        <p className="mt-2 text-sm text-slate-400">
-          Author: {sheet.author}
-        </p>
-      )}
-
-      {/* Description */}
-      {sheet.description && (
-        <p className="mt-4 text-sm text-slate-400 line-clamp-3">
-          {sheet.description}
-        </p>
-      )}
-
-      {/* Stats */}
-      <div className="mt-5 flex items-center justify-between text-sm text-slate-300">
-        <span>
-          🔥 {sheet.totalQuestions || 0} Questions
-        </span>
+    <article
+      className="sheet-library-card"
+      style={{ "--sheet-accent": meta.color }}
+    >
+      <div className="sheet-card-top">
+        <span className="sheet-card-icon"><Icon aria-hidden="true" /></span>
+        <span className="sheet-card-count">{sheet.totalQuestions || 0} questions</span>
       </div>
-
-      {/* Button */}
-      <Link
-        to={`/sheets/${sheet.slug}`}
-        className="mt-6 inline-block rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold hover:bg-cyan-700"
-      >
-        Open Sheet →
-      </Link>
-
-    </div>
+      <h2>{sheet.name}</h2>
+      <p className="sheet-card-author">{sheet.author || "Curated by DSA Roadmap"}</p>
+      <p className="sheet-card-description">
+        {sheet.description || "A focused set of problems to build reliable interview patterns."}
+      </p>
+      <div className="sheet-card-footer">
+        <span className="sheet-card-section-count">{sheet.sectionCount ? `${sheet.sectionCount} sections` : "Practice at your pace"}</span>
+        <Link to={`/sheets/${sheet.slug}`}>
+          Open sheet <FaArrowRight />
+        </Link>
+      </div>
+    </article>
   );
 }
 

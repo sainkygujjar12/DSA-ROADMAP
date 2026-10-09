@@ -1,0 +1,64 @@
+name: Validate application
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+      - run: npm ci
+        working-directory: client
+      - run: npm run lint
+        working-directory: client
+      - run: npm run build
+        working-directory: client
+      - run: npx playwright install --with-deps chromium
+        working-directory: client
+      - run: npm run test:ui
+        working-directory: client
+      - run: npm ci
+        working-directory: server
+      - run: npm test
+        working-directory: server
+      - run: npm run test:integration
+        working-directory: server
+        env:
+          TEST_MONGO_URI: mongodb://127.0.0.1:27017/dsa-roadmap-test
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: client
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: server
+      - run: docker build -t dsa-roadmap:ci .
+      - name: Retain browser failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-traces
+          path: client/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

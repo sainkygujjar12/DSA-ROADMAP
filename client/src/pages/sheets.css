@@ -1,0 +1,65 @@
+/* Keep summary numbers and progress rails readable in both themes. */
+.sheets-page .sheets-hero-stat strong { color: var(--app-text); }
+.sheets-page .sheet-card-progress { background: var(--app-border); }
+.sheets-page .sheets-hero p:not(.eyebrow-label) { color: var(--app-muted); }
+html[data-theme="light"] .sheets-page .sheet-card-author { color: color-mix(in srgb, var(--sheet-accent) 58%, #172033); }
+.sheet-detail-breadcrumb > a { display: inline-flex; align-items: center; gap: 7px; }
+html[data-theme] .sheet-detail-page .sheet-detail-hero { background: var(--app-surface); border-color: var(--app-border); box-shadow: var(--app-shadow); }
+.sheet-detail-hero h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); line-height: 1.25; }
+.sheet-detail-hero h1 svg { flex-shrink: 0; }
+.sheet-source-note { padding: 16px 20px; margin-top: 14px; border: 1px solid var(--app-border); border-radius: 12px; color: var(--app-muted); font-size: 12px; line-height: 1.8; background: var(--app-surface); }
+.sheet-source-note summary { cursor: pointer; color: var(--app-text); font-weight: 500; }
+.sheet-source-note p { margin-top: 10px; }
+.sheet-source-note > div { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 8px; }
+.sheet-source-note a { color: var(--app-accent); }
+.sheet-result-count { color: var(--app-muted); font-size: 11px; margin: 0 0 14px; }
+.sheet-question-list { border: 1px solid var(--app-border); background: var(--app-surface); border-radius: 15px; overflow: hidden; }
+.sheet-section-heading { color: var(--app-muted); background: var(--app-raised); padding: 12px 20px; font-size: 11px; font-weight: 600; letter-spacing: .06em; }
+.sheet-question-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 15px; padding: 16px 20px; border-bottom: 1px solid var(--app-border); transition: background 180ms; }
+.sheet-question-row:last-child { border-bottom: 0; }
+.sheet-question-row:hover { background: var(--app-accent-soft); }
+.sheet-solve-control { width: 34px; height: 34px; border: 1px solid var(--app-border); border-radius: 10px; color: var(--app-muted); display: grid; place-items: center; font-size: 10px; font-family: var(--font-mono); }
+.sheet-solve-control:hover { border-color: var(--app-accent); color: var(--app-accent); }
+.is-solved .sheet-solve-control { color: #159d79; border-color: #159d7966; background: #159d7914; }
+.sheet-question-copy { min-width: 0; }
+.sheet-question-copy > a { color: var(--app-text); font-weight: 500; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.sheet-question-copy > a:hover { color: var(--app-accent); }
+.is-solved .sheet-question-copy > a { color: var(--app-muted); }
+.sheet-question-copy > div { display: flex; gap: 12px; margin-top: 5px; color: var(--app-muted); }
+.sheet-question-copy > div > span { font-size: 10px; font-weight: 500; }
+.sheet-question-actions { display: flex; align-items: center; gap: 4px; }
+.sheet-question-actions > button, .sheet-resource-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 32px; min-height: 34px; border-radius: 7px; color: var(--app-muted); font-size: 13px; }
+.sheet-resource-link { padding: 0 8px; margin-right: 3px; font-size: 11px; color: var(--app-accent); }
+.sheet-question-actions > :hover { background: var(--app-raised); color: var(--app-accent); }
+.sheet-question-actions .is-bookmarked { color: #b88120; }
+.sheet-question-actions .has-note { color: var(--app-accent); }
+.sheet-list-empty { padding: 64px 24px; text-align: center; color: var(--app-muted); border: 1px solid var(--app-border); border-radius: 15px; background: var(--app-surface); }
+.sheet-list-empty h1 { color: var(--app-text); font-size: 25px; margin-bottom: 10px; }
+.sheet-list-empty a { color: var(--app-accent); display: inline-block; margin-top: 20px; }
+html[data-theme] .sheet-detail-page .sheet-progress-card { top: 96px; background: var(--app-surface); border-color: var(--app-border); box-shadow: var(--app-shadow); }
+html[data-theme] .sheet-detail-page .sheet-progress-heading { color: var(--app-text); }
+html[data-theme] .sheet-detail-page .sheet-progress-ring, html[data-theme] .sheet-detail-page .sheet-progress-ring > div { transform: none; }
+html[data-theme] .sheet-detail-page .sheet-progress-ring > div { background: var(--app-surface); }
+html[data-theme] .sheet-detail-page .sheet-progress-ring strong { color: var(--app-text); }
+.sheet-progress-difficulty .unrated { color: var(--app-muted); }
+.sheet-detail-page .sheet-detail-author, .sheet-detail-page .sheet-detail-count strong, .sheet-detail-page .sheet-detail-hero h1 svg { color: var(--app-accent); }
+.sheet-detail-page .sheet-detail-hero p:not(.eyebrow-label), .sheet-detail-page .sheet-progress-difficulty span { color: var(--app-muted); }
+.sheet-detail-page .sheet-progress-bar { background: var(--app-border); }
+html[data-theme="light"] .sheet-detail-page .sheet-progress-difficulty .easy { color: #087d5c; }
+html[data-theme="light"] .sheet-detail-page .sheet-progress-difficulty .medium { color: #926200; }
+html[data-theme="light"] .sheet-detail-page .sheet-progress-difficulty .hard { color: #c52e53; }
+.sheet-card-icon > svg { width: 24px; height: 24px; }
+.sheet-card-section-count { color: var(--app-muted); font-size: 11px; }
+@media (max-width: 640px) {
+  .sheet-detail-filters { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
+  .sheet-detail-filters > * { min-width: 0; }
+  .sheet-detail-filters select { max-width: 100%; }
+  .sheet-question-row { grid-template-columns: 30px minmax(0, 1fr); gap: 9px 12px; padding: 15px; }
+  .sheet-solve-control { width: 30px; height: 30px; align-self: start; margin-top: 2px; }
+  .sheet-question-actions { grid-column: 2; justify-content: flex-start; }
+  .sheet-detail-breadcrumb { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="reduced"]) .sheet-question-list { animation: sheet-list-appear 220ms ease-out; }
+}
+@keyframes sheet-list-appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }

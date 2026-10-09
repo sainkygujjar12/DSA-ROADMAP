@@ -1,55 +1,67 @@
 import { useEffect, useState } from "react";
+import { FaBookOpen, FaLayerGroup } from "react-icons/fa";
 import SheetGrid from "../components/sheets/SheetGrid";
 import MainLayout from "../components/layout/MainLayout";
-import { getSheets } from "../services/adminSheetService";
+import { getSheets } from "../services/sheetService";
+import "./sheets.css";
 
 function Sheets() {
   const [sheets, setSheets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSheets();
+    let cancelled = false;
+
+    async function loadSheets() {
+      try {
+        const res = await getSheets();
+        if (!cancelled) setSheets(res.data || []);
+      } catch (err) {
+        console.error("Sheets error:", err);
+        if (!cancelled) setSheets([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadSheets();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const fetchSheets = async () => {
-    try {
-      const res = await getSheets();
-      setSheets(res.data || []);
-    } catch (err) {
-      console.error("Sheets error:", err);
-      setSheets([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const totalQuestions = sheets.reduce(
+    (total, sheet) => total + (sheet.totalQuestions || 0),
+    0
+  );
 
   return (
     <MainLayout>
+      <div className="sheets-page">
+        <section className="sheets-hero">
+          <div>
+            <p className="eyebrow-label">Curated preparation</p>
+            <h1>Choose your sheet<span>.</span></h1>
+            <p>Practice from focused problem collections and keep every interview plan in one place.</p>
+          </div>
+          <div className="sheets-hero-stat">
+            <FaBookOpen />
+            <strong>{totalQuestions}</strong>
+            <span>questions across {sheets.length} sheets</span>
+          </div>
+        </section>
 
-      <div className="min-h-screen bg-slate-950 px-6 py-10 text-white">
-
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold">
-            📋 DSA Sheets
-          </h1>
-
-          <p className="mt-2 text-slate-400">
-            Browse all curated DSA sheets.
-          </p>
+        <div className="sheets-toolbar">
+          <span><FaLayerGroup /> Your preparation library</span>
+          <span>{sheets.length} collections</span>
         </div>
 
-        {/* Content */}
         {loading ? (
-          <div className="text-slate-400">
-            Loading sheets...
-          </div>
+          <div className="sheets-loading">Loading your sheets…</div>
         ) : (
           <SheetGrid sheets={sheets} />
         )}
-
       </div>
-
     </MainLayout>
   );
 }

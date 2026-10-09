@@ -58,7 +58,26 @@ const progressSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Daily solve counts used by the dashboard and profile heatmaps.
+    activity: [
+      {
+        date: {
+          type: String,
+          required: true,
+        },
+        count: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
+
     streak: {
+      type: Number,
+      default: 0,
+    },
+
+    bestStreak: {
       type: Number,
       default: 0,
     },
@@ -70,6 +89,7 @@ const progressSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    optimisticConcurrency: true,
   }
 );
 

@@ -2,15 +2,19 @@ const express = require("express");
 const router = express.Router();
 
 const topicController = require("../controllers/topic.controller");
-const { optionalAuth } = require("../middleware/auth.middleware");
+const {
+  protect,
+  optionalAuth,
+} = require("../middleware/auth.middleware");
+const { adminOnly } = require("../middleware/admin.middleware");
 
 // ==============================
 // GET ALL TOPICS + CREATE TOPIC
 // ==============================
 router
   .route("/")
-  .get(topicController.getAllTopics)
-  .post(topicController.createTopic);
+  .get(optionalAuth, topicController.getAllTopics)
+  .post(protect, adminOnly, topicController.createTopic);
 
 // ==============================
 // GET SINGLE TOPIC BY SLUG
@@ -22,7 +26,7 @@ router.get("/:slug", optionalAuth, topicController.getSingleTopic);
 // ==============================
 router
   .route("/:id")
-  .put(topicController.updateTopic)
-  .delete(topicController.deleteTopic);
+  .put(protect, adminOnly, topicController.updateTopic)
+  .delete(protect, adminOnly, topicController.deleteTopic);
 
 module.exports = router;

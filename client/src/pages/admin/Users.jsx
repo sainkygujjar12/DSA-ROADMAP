@@ -7,7 +7,6 @@ import SearchBar from "../../components/admin/SearchBar";
 
 import {
   getUsers,
-  updateUserRole,
   deleteUser,
 } from "../../services/adminUserService";
 
@@ -19,9 +18,7 @@ function Users() {
   const [deleteUserData, setDeleteUserData] =
     useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+
 
   const fetchUsers = async () => {
     try {
@@ -35,24 +32,13 @@ function Users() {
     }
   };
 
-  const handleRoleChange = async (user) => {
-    try {
-      const newRole =
-        user.role === "admin"
-          ? "user"
-          : "admin";
-
-      await updateUserRole(
-        user._id,
-        newRole
-      );
-
-      fetchUsers();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update role");
-    }
-  };
+  useEffect(() => {
+    let active = true;
+    getUsers().then(response => { if (active) setUsers(response.data || []); })
+      .catch(error => console.error(error))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const handleDelete = async () => {
     try {
@@ -108,9 +94,6 @@ function Users() {
       ) : (
         <UserTable
           users={filteredUsers}
-          onRoleChange={
-            handleRoleChange
-          }
           onDelete={(user) =>
             setDeleteUserData(user)
           }

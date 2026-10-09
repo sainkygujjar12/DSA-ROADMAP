@@ -24,9 +24,7 @@ function Companies() {
   const [deleteCompanyData, setDeleteCompanyData] =
     useState(null);
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
+
 
   const fetchCompanies = async () => {
     try {
@@ -38,6 +36,14 @@ function Companies() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    getCompanies().then(response => { if (active) setCompanies(response.data || []); })
+      .catch(error => console.error(error))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const handleSaveCompany = async (
     formData
@@ -137,7 +143,7 @@ function Companies() {
       )}
 
       {showModal && (
-        <CompanyForm
+        <CompanyForm key={editingCompany?._id || "new"}
           initialData={editingCompany}
           onClose={() => {
             setShowModal(false);

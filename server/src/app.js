@@ -1,8 +1,11 @@
 const express = require("express");
+const path = require("node:path");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const compression = require("compression");
-const rateLimit = require("express-rate-limit");
+const { edgeLimiter, userLimiter, authLimiter } = require('./middleware/rateLimits');
+const { optionalAuth } = require('./middleware/auth.middleware');
 
 const authRoutes = require("./routes/auth.routes");
 const topicRoutes = require("./routes/topic.routes");
@@ -18,6 +21,8 @@ const userRoutes = require("./routes/user.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
+app.disable("x-powered-by");
+if (process.env.TRUST_PROXY_HOPS) app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS));
 
 // ==============================
 // Middlewares
@@ -27,17 +32,17 @@ const app = express();
 // CORS
 // In production, set CLIENT_URL to a comma-separated list
 // of allowed frontend origins (e.g. your Vercel domain).
-// Falls back to permissive CORS if unset, so local dev
-// keeps working without any extra setup.
+// Local development permits only the Vite development origins.
 // ==============================
 
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((o) => o.trim())
   : null;
+const developmentOrigins = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"];
 
 app.use(
   cors({
-    origin: allowedOrigins || true,
+    origin: process.env.NODE_ENV === "production" ? allowedOrigins || false : [...new Set([...(allowedOrigins || []), ...developmentOrigins])],
     credentials: true,
   })
 );
@@ -47,6 +52,14 @@ app.use(
 // Identity Services' popup-based Sign-In flow.
 app.use(
   helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production" ? { directives: {
+      "script-src": ["'self'", "https://accounts.google.com"],
+      "connect-src": ["'self'", "https://accounts.google.com"],
+      "frame-src": ["https://accounts.google.com"],
+      "img-src": ["'self'", "data:", "https:"],
+      "style-src": ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://fonts.googleapis.com"],
+      "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+    } } : false,
     crossOriginOpenerPolicy: {
       policy: "same-origin-allow-popups",
     },
@@ -56,8 +69,10 @@ app.use(
 // Gzip responses
 app.use(compression());
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Profile photos are resized in the browser before upload, but allow a
+// reasonable payload size for the resulting data URL.
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 // ==============================
 // Rate Limiting
@@ -66,32 +81,21 @@ app.use(express.urlencoded({ extended: true }));
 // login/register/password attempts.
 // ==============================
 
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: "Too many attempts. Please try again later.",
-  },
-});
-
-app.use("/api", generalLimiter);
-app.use("/api/auth", authLimiter);
+app.use('/api', edgeLimiter);
+app.use('/api', (req, res, next) => req.path === '/health' ? next() : optionalAuth(req, res, next));
+app.use('/api', userLimiter);
+app.use('/api/auth', authLimiter);
 
 // ==============================
 // Health Check
 // ==============================
 
-app.get("/", (req, res) => {
+app.get("/api/health", (req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({ success: ready });
+});
+
+app.get("/api", (req, res) => {
   res.status(200).json({
     success: true,
     message: "🚀 DSA Roadmap API is running...",
@@ -131,6 +135,15 @@ app.use("/api/admin", adminRoutes);
 // ==============================
 // 404 Route
 // ==============================
+
+if (process.env.NODE_ENV === "production") {
+  const staticDirectory = path.resolve(__dirname, "../../client/dist");
+  app.use(express.static(staticDirectory));
+  app.get("/{*splat}", (req, res, next) => {
+    if (req.path.startsWith("/api/") || path.extname(req.path)) return next();
+    res.sendFile(path.join(staticDirectory, "index.html"));
+  });
+}
 
 app.use((req, res) => {
   res.status(404).json({

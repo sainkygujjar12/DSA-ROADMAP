@@ -36,6 +36,9 @@ const companySchema = new mongoose.Schema(
       default: "",
     },
 
+    sourceUrl: { type: String, default: "" },
+    sourceNote: { type: String, default: "" },
+
     isActive: {
       type: Boolean,
       default: true,

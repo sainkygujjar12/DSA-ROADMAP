@@ -66,7 +66,7 @@ exports.createTopic = async (data) => {
 
 exports.updateTopic = async (id, data) => {
   return await Topic.findByIdAndUpdate(id, data, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
 };

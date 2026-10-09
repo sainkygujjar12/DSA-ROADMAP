@@ -2,12 +2,13 @@ import { Link } from "react-router-dom";
 import Card from "../ui/Card";
 import ProgressBar from "../ui/ProgressBar";
 import Badge from "../ui/Badge";
+import TopicIcon from "../common/TopicIcon";
 
 function TopicCard({ topic }) {
   return (
     <Card className="group transition-all duration-300 hover:-translate-y-2 hover:border-cyan-500 hover:shadow-xl">
       <div className="flex items-center justify-between">
-        <span className="text-5xl">{topic.icon}</span>
+        <TopicIcon slug={topic.slug} size={28} />
 
         <span className="text-sm text-slate-400">
           {topic.totalQuestions} Questions

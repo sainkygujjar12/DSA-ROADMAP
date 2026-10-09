@@ -1,33 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function CompanyForm({
   onClose,
   onSave,
   initialData = null,
 }) {
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
-    logo: "",
-    color: "#2563EB",
-    website: "",
-    description: "",
-    isActive: true,
-  });
+  const [form, setForm] = useState(() => ({
+        name: initialData?.name || "",
+        slug: initialData?.slug || "",
+        logo: initialData?.logo || "",
+        color: initialData?.color || "#2563EB",
+        website: initialData?.website || "",
+        description: initialData?.description || "",
+        isActive: initialData?.isActive ?? true,
+      }));
 
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        name: initialData.name || "",
-        slug: initialData.slug || "",
-        logo: initialData.logo || "",
-        color: initialData.color || "#2563EB",
-        website: initialData.website || "",
-        description: initialData.description || "",
-        isActive: initialData.isActive ?? true,
-      });
-    }
-  }, [initialData]);
+
 
   const generateSlug = (text) =>
     text

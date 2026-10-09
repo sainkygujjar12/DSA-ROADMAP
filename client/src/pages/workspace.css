@@ -1,0 +1,106 @@
+.dashboard-welcome { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 6px 0 32px; }
+.dashboard-welcome h1 { margin: 9px 0; color: var(--app-text); font-size: clamp(26px, 3vw, 38px); font-weight: 600; line-height: 1.2; letter-spacing: -.045em; }
+.dashboard-welcome h1 > span { color: var(--app-accent); }
+.dashboard-welcome > div > p:last-child { color: var(--app-muted); font-size: 13px; line-height: 1.7; }
+.dashboard-page { gap: 24px; }
+.dashboard-page .dashboard-main { grid-template-columns: minmax(0, 1fr); }
+.dashboard-page :is(.dashboard-activity-card, .dashboard-progress-section) { min-width: 0; }
+.dashboard-page .dashboard-profile-card { padding: 28px 20px 22px; }
+.dashboard-profile-card h2 { color: var(--app-text); font-size: 19px; font-weight: 600; letter-spacing: -.025em; margin: 16px 0 4px; overflow-wrap: anywhere; }
+.dashboard-profile-email { display: flex; justify-content: center; align-items: center; gap: 7px; overflow-wrap: anywhere; }
+.dashboard-profile-email svg { flex-shrink: 0; font-size: 11px; }
+.dashboard-page .dashboard-avatar { border: 1px solid var(--app-border); background: var(--app-accent-soft); box-shadow: none; color: var(--app-accent); }
+.dashboard-page .dashboard-edit-button { margin-top: 22px; border-color: var(--app-border); color: var(--app-text); background: var(--app-raised); }
+.dashboard-page .dashboard-edit-button:hover { border-color: var(--app-accent); color: var(--app-accent); }
+.dashboard-page .dashboard-streak-grid > div { border-color: var(--app-border); background: var(--app-surface); border-radius: 12px; padding: 17px 12px; }
+.dashboard-page .dashboard-streak-grid strong { color: var(--app-text); }
+.dashboard-page .dashboard-card-heading strong { color: var(--app-text); }
+.dashboard-page .dashboard-all-card { display: grid; grid-template-columns: minmax(0, 1fr) 91px; gap: 24px 16px; align-items: center; min-height: 0; }
+.dashboard-page .dashboard-card-heading { grid-column: 1 / -1; }
+.dashboard-page .dashboard-all-stat-row { margin: 0; }
+.dashboard-page .dashboard-all-stat-row span { color: var(--app-muted); }
+.dashboard-page .dashboard-mini-ring { position: static; transform: none; }
+.dashboard-page .dashboard-mini-ring > div { background: var(--app-surface); }
+.dashboard-page .dashboard-mini-ring > div { transform: none; }
+.dashboard-page .dashboard-mini-ring strong { color: var(--app-text); }
+.dashboard-page .dashboard-mini-ring :is(span, small) { color: var(--app-muted); }
+html[data-theme] .dashboard-page .dashboard-progress-section { background: transparent; border: none; padding: 4px 0 0; border-radius: 0; box-shadow: none; }
+.dashboard-page :is(.dashboard-activity-controls, .dashboard-activity-note, .dashboard-card-heading span, .dashboard-streak-grid span) { color: var(--app-muted); }
+html[data-theme="light"] .dashboard-page .easy-text { color: #168063; }
+html[data-theme="light"] .dashboard-page .medium-text { color: #a46a15; }
+html[data-theme="light"] .dashboard-page .hard-text { color: #c33655; }
+.dashboard-page .dashboard-activity-card { padding: 24px; }
+.dashboard-page .dashboard-activity-heading { gap: 20px; }
+.dashboard-page .dashboard-activity-heading strong { font-size: 13px; color: var(--app-text); }
+.dashboard-page .dashboard-activity-controls { gap: 14px; }
+.dashboard-page .dashboard-activity-controls select { background: var(--app-raised); color: var(--app-text); border: 1px solid var(--app-border); }
+.dashboard-page .dashboard-section-heading { margin-bottom: 20px; }
+.dashboard-page .dashboard-section-heading h2 { font-size: 22px; color: var(--app-text); font-weight: 600; letter-spacing: -.035em; }
+.dashboard-page .dashboard-section-heading p { color: var(--app-muted); line-height: 1.6; }
+.dashboard-page .dashboard-section-heading > a { color: var(--app-accent); }
+.dashboard-page .dashboard-course-grid { gap: 16px; }
+html[data-theme] .dashboard-page .dashboard-course-card { padding: 22px; min-width: 0; position: relative; overflow: hidden; transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
+.dashboard-topic-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.dashboard-topic-state { display: inline-flex; gap: 5px; align-items: center; color: var(--app-muted); font-size: 10px; }
+.is-complete .dashboard-topic-state { color: #24b58a; }
+.dashboard-page .dashboard-course-card h3 { color: var(--app-text); font-size: 18px; font-weight: 600; letter-spacing: -.025em; margin: 23px 0 8px; }
+.dashboard-topic-description { color: var(--app-muted); font-size: 12px; line-height: 1.65; min-height: 40px; margin: 0; }
+.dashboard-page .dashboard-course-progress { height: 4px; margin: 24px 0 12px; background: var(--app-border); }
+.dashboard-page .dashboard-course-progress > span { min-width: 0; background: var(--app-accent); }
+.dashboard-page .dashboard-course-footer { color: var(--app-muted); font-size: 11px; }
+.dashboard-course-footer strong { display: flex; align-items: center; gap: 10px; color: var(--app-text); font-size: 11px; font-weight: 500; }
+.dashboard-course-footer strong > svg { width: 10px; color: var(--app-accent); transition: transform 220ms; }
+.dashboard-course-card:hover .dashboard-course-footer svg { transform: translateX(3px); }
+.dashboard-course-card:focus-visible { outline: 2px solid var(--app-accent); outline-offset: 4px; }
+.dashboard-topic-top .topic-icon { transition: transform 220ms; }
+.dashboard-course-card:hover .topic-icon { transform: translateY(-2px) rotate(-3deg); }
+.workspace-empty { display: grid; justify-items: center; align-content: center; gap: 18px; min-height: 60vh; text-align: center; color: var(--app-text); }
+.workspace-empty h1 { font-size: 25px; font-weight: 600; letter-spacing: -.035em; }
+.workspace-empty p { font-size: 13px; color: var(--app-muted); }
+.profile-page .profile-page-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 8px; }
+.profile-page .profile-main-content { grid-template-columns: minmax(0, 1fr); }
+.profile-page :is(.profile-activity-card, .profile-difficulty-card) { min-width: 0; }
+.profile-page .profile-identity-card { top: 100px; }
+.profile-page .profile-avatar-large { background: var(--app-accent-soft); border-color: var(--app-border); box-shadow: none; color: var(--app-accent); }
+html[data-theme] .profile-page :is(.profile-identity-card, .profile-stat-card) { border: 1px solid var(--app-border); background: var(--app-surface); border-radius: 14px; box-shadow: var(--app-shadow); }
+.profile-page .profile-identity-copy { border-color: var(--app-border); }
+.profile-page .profile-photo-button { color: var(--app-text); border-color: var(--app-border); background: var(--app-raised); }
+.profile-page .profile-name-editor input { background: var(--app-bg); color: var(--app-text); border-color: var(--app-border); }
+.profile-page .profile-name-editor button { background: var(--app-accent-soft); color: var(--app-accent); }
+.profile-page .profile-name-editor button:disabled { opacity: .5; cursor: wait; }
+.profile-page .profile-stat-ring { background: conic-gradient(var(--app-accent) 0deg var(--progress), var(--app-border) var(--progress) 360deg); }
+.profile-page .profile-stat-ring::before { background: var(--app-surface); }
+.profile-page .profile-stat-ring span { color: var(--app-text); }
+.profile-page .profile-save-notice { color: var(--app-muted); font-size: 12px; text-align: center; line-height: 1.6; margin-top: 12px; }
+.profile-data-notice { padding: 14px 18px; margin-bottom: 20px; border: 1px solid var(--app-border); border-radius: 10px; font-size: 12px; color: var(--app-muted); background: var(--app-surface); }
+html[data-theme="light"] :is(.dashboard-page, .profile-page) :is(.activity-cell.level-0, .activity-legend .level-0) { background: #e9ecf1; }
+html[data-theme="light"] :is(.dashboard-page, .profile-page) :is(.activity-cell.level-1, .activity-legend .level-1) { background: #b5e4d6; }
+html[data-theme="light"] :is(.dashboard-page, .profile-page) :is(.activity-cell.level-2, .activity-legend .level-2) { background: #65c7a9; }
+html[data-theme="light"] :is(.dashboard-page, .profile-page) :is(.activity-cell.level-3, .activity-legend .level-3) { background: #259e7b; }
+html[data-theme="light"] :is(.dashboard-page, .profile-page) :is(.activity-cell.level-4, .activity-legend .level-4) { background: #107456; }
+.profile-page :is(.profile-page-heading > div > p:last-child, .profile-activity-heading p:not(.eyebrow-label), .profile-stat-card > span, .profile-stat-card > em, .profile-stat-copy > span, .profile-stat-copy > strong small, .profile-identity-copy > p, .profile-identity-footer) { color: var(--app-muted); }
+.profile-page .profile-difficulty-track { background: var(--app-border); }
+html[data-theme="light"] .profile-page :is(.profile-difficulty-row > div:first-child .easy, .profile-stat-copy > em, .profile-section-title > strong) { color: #168063; }
+html[data-theme="light"] .profile-page .profile-difficulty-row > div:first-child .medium { color: #a46a15; }
+html[data-theme="light"] .profile-page .profile-difficulty-row > div:first-child .hard { color: #c33655; }
+@keyframes workspace-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes progress-enter { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="reduced"]) .dashboard-page .dashboard-course-card { animation: workspace-enter 420ms cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--card-order, 0) * 45ms); }
+  html:not([data-motion="reduced"]) .dashboard-course-progress > span { transform-origin: left; animation: progress-enter 800ms cubic-bezier(.2,.7,.3,1) both; }
+  html:not([data-motion="reduced"]) .profile-page :is(.profile-identity-card, .profile-main-content) { animation: workspace-enter 400ms ease-out both; }
+}
+@media (max-width: 1000px) { .dashboard-welcome { align-items: flex-start; } .dashboard-welcome .settings-secondary { margin-top: 24px; } }
+@media (max-width: 760px) { .dashboard-page .dashboard-rail { align-items: stretch; } }
+@media (max-width: 640px) {
+  .dashboard-welcome { flex-direction: column; gap: 16px; padding-bottom: 24px; }
+  .dashboard-welcome .settings-secondary { margin-top: 0; }
+  .dashboard-page .dashboard-activity-card { padding: 18px 15px; }
+  .dashboard-page .dashboard-section-heading { align-items: flex-start; gap: 18px; }
+  .dashboard-page .dashboard-section-heading > a { white-space: nowrap; font-size: 10px; margin-top: 6px; }
+  html[data-theme] .dashboard-page .dashboard-course-card { padding: 18px; }
+  .profile-page .profile-page-heading { flex-wrap: wrap; }
+  :is(.dashboard-page, .profile-page) .activity-grid { grid-auto-columns: minmax(2px, 1fr); }
+  :is(.dashboard-page, .profile-page) .activity-cell { min-width: 0; }
+  :is(.dashboard-page, .profile-page) .activity-months { margin-left: 0; font-size: 8px; }
+}

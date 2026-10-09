@@ -1,5 +1,6 @@
 const Progress = require("../models/Progress");
 const Question = require("../models/Question");
+const { ensureProgress, mutateProgress } = require("../utils/progressMutation");
 
 // ======================================
 // Get Solved / Bookmarked ID Sets
@@ -81,9 +82,7 @@ exports.getProgress = async (userId) => {
     });
 
   if (!progress) {
-    progress = await Progress.create({
-      user: userId,
-    });
+    await ensureProgress(userId);
 
     progress = await Progress.findOne({
       user: userId,
@@ -122,93 +121,108 @@ exports.toggleSolvedQuestion = async (
   userId,
   questionId
 ) => {
-  let progress = await Progress.findOne({
-    user: userId,
-  });
-
-  if (!progress) {
-    progress = await Progress.create({
-      user: userId,
-    });
-  }
-
   const question = await Question.findById(questionId);
 
   if (!question) {
     throw new Error("Question not found");
   }
 
-  const index = progress.solvedQuestions.findIndex(
-    (id) => id.toString() === questionId
-  );
+  await mutateProgress(userId, progress => {
+    const index = progress.solvedQuestions.findIndex(
+      (id) => id.toString() === questionId
+    );
 
-  if (index === -1) {
-    progress.solvedQuestions.push(questionId);
+    if (index === -1) {
+      progress.solvedQuestions.push(questionId);
 
-    if (question.difficulty === "Easy")
-      progress.easySolved++;
+      if (question.difficulty === "Easy")
+        progress.easySolved++;
 
-    if (question.difficulty === "Medium")
-      progress.mediumSolved++;
+      if (question.difficulty === "Medium")
+        progress.mediumSolved++;
 
-    if (question.difficulty === "Hard")
-      progress.hardSolved++;
+      if (question.difficulty === "Hard")
+        progress.hardSolved++;
 
-    // ================= STREAK =================
-    // Consecutive-day streak: if the last solve was
-    // yesterday, extend it; if it was already today,
-    // leave it as-is; otherwise (a gap, or first-ever
-    // solve) the streak restarts at 1.
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+      // ================= STREAK =================
+      // Consecutive-day streak: if the last solve was
+      // yesterday, extend it; if it was already today,
+      // leave it as-is; otherwise (a gap, or first-ever
+      // solve) the streak restarts at 1.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    if (!progress.lastSolvedDate) {
-      progress.streak = 1;
-    } else {
-      const lastDate = new Date(progress.lastSolvedDate);
-      lastDate.setHours(0, 0, 0, 0);
+      if (!progress.lastSolvedDate) {
+        progress.streak = 1;
+      } else {
+        const lastDate = new Date(progress.lastSolvedDate);
+        lastDate.setHours(0, 0, 0, 0);
 
-      const diffDays = Math.round(
-        (today - lastDate) / (1000 * 60 * 60 * 24)
+        const diffDays = Math.round(
+          (today - lastDate) / (1000 * 60 * 60 * 24)
+        );
+
+        if (diffDays === 0) {
+          // already solved something today — streak unchanged
+        } else if (diffDays === 1) {
+          progress.streak += 1;
+        } else {
+          progress.streak = 1;
+        }
+      }
+
+      progress.bestStreak = Math.max(
+        progress.bestStreak || 0,
+        progress.streak
       );
 
-      if (diffDays === 0) {
-        // already solved something today — streak unchanged
-      } else if (diffDays === 1) {
-        progress.streak += 1;
+      progress.lastSolvedDate = new Date();
+
+      const date = new Date().toISOString().slice(0, 10);
+      progress.activity = progress.activity || [];
+      const activityEntry = progress.activity.find(
+        (entry) => entry.date === date
+      );
+
+      if (activityEntry) {
+        activityEntry.count += 1;
       } else {
-        progress.streak = 1;
+        progress.activity.push({ date, count: 1 });
       }
+    } else {
+      progress.solvedQuestions.splice(index, 1);
+
+      if (
+        question.difficulty === "Easy" &&
+        progress.easySolved > 0
+      )
+        progress.easySolved--;
+
+      if (
+        question.difficulty === "Medium" &&
+        progress.mediumSolved > 0
+      )
+        progress.mediumSolved--;
+
+      if (
+        question.difficulty === "Hard" &&
+        progress.hardSolved > 0
+      )
+        progress.hardSolved--;
+
+      const date = new Date().toISOString().slice(0, 10);
+      progress.activity = (progress.activity || []).filter((entry) => {
+        if (entry.date !== date) return true;
+        entry.count = Math.max(0, entry.count - 1);
+        return entry.count > 0;
+      });
+
+      // Unsolving doesn't touch streak/lastSolvedDate —
+      // it shouldn't retroactively break a streak the user
+      // already earned that day.
     }
 
-    progress.lastSolvedDate = new Date();
-  } else {
-    progress.solvedQuestions.splice(index, 1);
-
-    if (
-      question.difficulty === "Easy" &&
-      progress.easySolved > 0
-    )
-      progress.easySolved--;
-
-    if (
-      question.difficulty === "Medium" &&
-      progress.mediumSolved > 0
-    )
-      progress.mediumSolved--;
-
-    if (
-      question.difficulty === "Hard" &&
-      progress.hardSolved > 0
-    )
-      progress.hardSolved--;
-
-    // Unsolving doesn't touch streak/lastSolvedDate —
-    // it shouldn't retroactively break a streak the user
-    // already earned that day.
-  }
-
-  await progress.save();
+  });
 
   const updatedProgress = await Progress.findOne({
     user: userId,
@@ -243,19 +257,12 @@ exports.updateLastVisitedQuestion = async (
   userId,
   questionId
 ) => {
-  let progress = await Progress.findOne({
-    user: userId,
+  if (!await Question.exists({ _id: questionId })) throw new Error("Question not found");
+
+  await mutateProgress(userId, progress => {
+    progress.lastVisitedQuestion = questionId;
+
   });
-
-  if (!progress) {
-    progress = await Progress.create({
-      user: userId,
-    });
-  }
-
-  progress.lastVisitedQuestion = questionId;
-
-  await progress.save();
 
   const updatedProgress = await Progress.findOne({
     user: userId,
@@ -272,34 +279,25 @@ exports.toggleBookmark = async (
   userId,
   questionId
 ) => {
-  let progress = await Progress.findOne({
-    user: userId,
-  });
-
-  if (!progress) {
-    progress = await Progress.create({
-      user: userId,
-    });
-  }
-
   const question = await Question.findById(questionId);
 
   if (!question) {
     throw new Error("Question not found");
   }
 
-  const index =
-    progress.bookmarkedQuestions.findIndex(
-      (id) => id.toString() === questionId
-    );
+  await mutateProgress(userId, progress => {
+    const index =
+      progress.bookmarkedQuestions.findIndex(
+        (id) => id.toString() === questionId
+      );
 
-  if (index === -1) {
-    progress.bookmarkedQuestions.push(questionId);
-  } else {
-    progress.bookmarkedQuestions.splice(index, 1);
-  }
+    if (index === -1) {
+      progress.bookmarkedQuestions.push(questionId);
+    } else {
+      progress.bookmarkedQuestions.splice(index, 1);
+    }
 
-  await progress.save();
+  });
 
   const updatedProgress = await Progress.findOne({
     user: userId,
@@ -324,37 +322,29 @@ exports.saveNotes = async (
   questionId,
   content
 ) => {
-  let progress = await Progress.findOne({
-    user: userId,
-  });
-
-  if (!progress) {
-    progress = await Progress.create({
-      user: userId,
-    });
-  }
-
+  if (typeof content !== "string" || content.length > 20000) throw new Error("Notes must be text with at most 20,000 characters");
   const question = await Question.findById(questionId);
 
   if (!question) {
     throw new Error("Question not found");
   }
 
-  const noteIndex = progress.notes.findIndex(
-    (note) =>
-      note.question.toString() === questionId
-  );
+  await mutateProgress(userId, progress => {
+    const noteIndex = progress.notes.findIndex(
+      (note) =>
+        note.question.toString() === questionId
+    );
 
-  if (noteIndex === -1) {
-    progress.notes.push({
-      question: questionId,
-      content,
-    });
-  } else {
-    progress.notes[noteIndex].content = content;
-  }
+    if (noteIndex === -1) {
+      progress.notes.push({
+        question: questionId,
+        content,
+      });
+    } else {
+      progress.notes[noteIndex].content = content;
+    }
 
-  await progress.save();
+  });
 
   return await Progress.findOne({
     user: userId,
@@ -368,20 +358,13 @@ exports.deleteNote = async (
   userId,
   questionId
 ) => {
-  let progress = await Progress.findOne({
-    user: userId,
+  await mutateProgress(userId, progress => {
+    progress.notes = progress.notes.filter(
+      (note) =>
+        note.question.toString() !== questionId
+    );
+
   });
-
-  if (!progress) {
-    throw new Error("Progress not found");
-  }
-
-  progress.notes = progress.notes.filter(
-    (note) =>
-      note.question.toString() !== questionId
-  );
-
-  await progress.save();
 
   return await Progress.findOne({
     user: userId,

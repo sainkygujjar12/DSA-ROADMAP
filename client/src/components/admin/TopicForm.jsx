@@ -1,31 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function TopicForm({
   onClose,
   onSave,
   initialData = null,
 }) {
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
-    icon: "📚",
-  });
+  const [form, setForm] = useState(() => ({
+        name: initialData?.name || "",
+        slug: initialData?.slug || "",
+        icon: initialData?.icon || "📚",
+      }));
 
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        name: initialData.name || "",
-        slug: initialData.slug || "",
-        icon: initialData.icon || "📚",
-      });
-    } else {
-      setForm({
-        name: "",
-        slug: "",
-        icon: "📚",
-      });
-    }
-  }, [initialData]);
+
 
   const generateSlug = (text) => {
     return text

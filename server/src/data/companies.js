@@ -1,4 +1,5 @@
 const companies = [
+  ...require("./additionalCompanies"),
   {
     name: "Amazon",
     slug: "amazon",
@@ -61,4 +62,9 @@ const companies = [
   }
 ];
 
-module.exports = companies;
+const repositoryCompanies = require("./repositoryCompanies");
+const companyBySlug = new Map(repositoryCompanies.map(company => [company.slug, company]));
+for (const company of companies) {
+  companyBySlug.set(company.slug, { ...companyBySlug.get(company.slug), ...company });
+}
+module.exports = [...companyBySlug.values()];

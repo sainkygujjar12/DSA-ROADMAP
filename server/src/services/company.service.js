@@ -14,21 +14,16 @@ exports.getCompanies = async () => {
     name: 1,
   });
 
-  const result = await Promise.all(
-    companies.map(async (company) => {
-      const totalQuestions =
-        await Question.countDocuments({
-          companies: company._id,
-        });
-
-      return {
-        ...company.toObject(),
-        totalQuestions,
-      };
-    })
-  );
-
-  return result;
+  const counts = await Question.aggregate([
+    { $match: { isActive: true } },
+    { $unwind: "$companies" },
+    { $group: { _id: "$companies", count: { $sum: 1 } } },
+  ]);
+  const countByCompany = new Map(counts.map(row => [String(row._id), row.count]));
+  return companies.map(company => ({
+    ...company.toObject(),
+    totalQuestions: countByCompany.get(String(company._id)) || 0,
+  }));
 };
 
 // ======================================
@@ -49,9 +44,10 @@ exports.getCompanyBySlug = async (
 
   const questions = await Question.find({
     companies: company._id,
+    isActive: true,
   })
     .populate("topic", "name slug icon")
-    .populate("companies", "name logo")
+    .populate("companies", "name slug logo color")
     .populate("sheets", "name")
     .sort({
       difficulty: 1,
@@ -93,7 +89,7 @@ exports.updateCompany = async (
     id,
     data,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     }
   );

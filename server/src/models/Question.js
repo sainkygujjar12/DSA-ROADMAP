@@ -17,7 +17,7 @@ const questionSchema = new mongoose.Schema(
 
     difficulty: {
       type: String,
-      enum: ["Easy", "Medium", "Hard"],
+      enum: ["Easy", "Medium", "Hard", "Unrated"],
       required: true,
     },
 
@@ -66,6 +66,17 @@ const questionSchema = new mongoose.Schema(
       default: "",
     },
 
+    resourceUrl: {
+      type: String,
+      default: "",
+    },
+
+    kind: {
+      type: String,
+      enum: ["problem", "concept"],
+      default: "problem",
+    },
+
     frequency: {
       type: Number,
       default: 0,
@@ -92,15 +103,15 @@ const questionSchema = new mongoose.Schema(
   }
 );
 
-questionSchema.pre("validate", function (next) {
-  if (!this.leetcodeUrl && !this.gfgUrl) {
-    return next(
-      new Error(
-        "A question needs at least one of leetcodeUrl or gfgUrl"
-      )
-    );
+// Each multikey field needs its own index (companies and sheets are arrays).
+questionSchema.index({ topic: 1, isActive: 1, difficulty: 1, title: 1 });
+questionSchema.index({ companies: 1, isActive: 1, difficulty: 1, title: 1 });
+questionSchema.index({ sheets: 1, isActive: 1, difficulty: 1, title: 1 });
+
+questionSchema.pre("validate", function () {
+  if (!this.leetcodeUrl && !this.gfgUrl && !this.resourceUrl) {
+    throw new Error("A question needs a practice or study resource");
   }
-  next();
 });
 
 module.exports = mongoose.model("Question", questionSchema);

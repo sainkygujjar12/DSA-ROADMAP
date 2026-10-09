@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import Button from "../ui/Button";
 import { saveNotes } from "../../services/progressService";
@@ -7,13 +7,9 @@ function NotesSection({
   questionId,
   initialNote = "",
 }) {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(initialNote || "");
   const [saving, setSaving] = useState(false);
 
-  // Update textarea whenever initialNote changes
-  useEffect(() => {
-    setContent(initialNote || "");
-  }, [initialNote]);
 
   const handleSave = async () => {
     try {

@@ -1,31 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function SheetForm({
   onClose,
   onSave,
   initialData = null,
 }) {
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
-    author: "",
-    description: "",
-    isActive: true,
-  });
-
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        name: initialData.name || "",
-        slug: initialData.slug || "",
-        author: initialData.author || "",
+  const [form, setForm] = useState(() => ({
+        name: initialData?.name || "",
+        slug: initialData?.slug || "",
+        author: initialData?.author || "",
         description:
-          initialData.description || "",
+          initialData?.description || "",
         isActive:
-          initialData.isActive ?? true,
-      });
-    }
-  }, [initialData]);
+          initialData?.isActive ?? true,
+      }));
+
+
 
   const generateSlug = (text) =>
     text

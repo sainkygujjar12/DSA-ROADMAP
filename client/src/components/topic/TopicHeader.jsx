@@ -1,50 +1,33 @@
 import ProgressBar from "../ui/ProgressBar";
+import TopicIcon from "../common/TopicIcon";
 
 function TopicHeader({ topic, iconNode }) {
   return (
-    <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-6">
-      <div className="flex items-center gap-4">
-        {iconNode ? (
-          iconNode
-        ) : (
-          <span className="text-5xl">{topic.icon}</span>
-        )}
-
+    <section className="topic-hero-card">
+      <div className="topic-hero-main">
+        {iconNode || <TopicIcon slug={topic.slug} size={28} />}
         <div>
-          <h1 className="text-4xl font-bold">
-            {topic.name}
-          </h1>
-
-          <p className="mt-2 text-slate-400">
-            {topic.description}
-          </p>
+          <p className="eyebrow-label">Practice path</p>
+          <h1>{topic.name}</h1>
+          <p>{topic.description}</p>
         </div>
       </div>
 
-      <div className="mt-8">
-        <ProgressBar value={topic.progress} />
+      <div className="topic-hero-progress">
+        <div className="topic-hero-progress-top">
+          <span>Your progress</span>
+          <strong>{topic.progress || 0}%</strong>
+        </div>
+        <ProgressBar value={topic.progress || 0} />
       </div>
 
-      <div className="mt-5 flex gap-8 text-sm">
-
-        <p>
-          📄 {topic.totalQuestions} Questions
-        </p>
-
-        <p className="text-green-400">
-          Easy {topic.easy}
-        </p>
-
-        <p className="text-yellow-400">
-          Medium {topic.medium}
-        </p>
-
-        <p className="text-red-400">
-          Hard {topic.hard}
-        </p>
-
+      <div className="topic-hero-stats">
+        <span>▣ {topic.totalQuestions || 0} Questions</span>
+        <span className="easy">Easy {topic.easy || 0}</span>
+        <span className="medium">Medium {topic.medium || 0}</span>
+        <span className="hard">Hard {topic.hard || 0}</span>
       </div>
-    </div>
+    </section>
   );
 }
 

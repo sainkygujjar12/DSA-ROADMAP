@@ -8,60 +8,55 @@ function Companies() {
   const [companies, setCompanies] = useState([]);
 
   useEffect(() => {
+    let cancelled = false;
+
     getCompanies()
-      .then((res) => setCompanies(res.data || []))
-      .catch((err) => console.error(err));
+      .then((response) => {
+        if (!cancelled) setCompanies(response?.data || []);
+      })
+      .catch((error) => console.error("Landing companies error:", error));
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (companies.length === 0) return null;
+  if (!companies.length) return null;
 
-  // Duplicate the list so the CSS animation can loop
-  // seamlessly from -50% back to 0%.
   const track = [...companies, ...companies];
 
   return (
-    <section className="bg-slate-950 py-20">
-      <div className="mx-auto max-w-7xl px-6">
-
-        <h2 className="text-center text-4xl font-bold text-white">
-          Prepare for Top Companies
-        </h2>
-
-        <p className="mt-4 text-center text-slate-400">
-          Company-tagged questions pulled straight from real
-          interview experiences.
-        </p>
-
+    <section className="landing-company-flow" aria-labelledby="company-flow-heading">
+      <div className="landing-container">
+        <div className="landing-section-heading">
+          <div>
+            <p className="landing-eyebrow">Company-tagged practice</p>
+            <h2 id="company-flow-heading">Prepare for the companies you want<span>.</span></h2>
+          </div>
+          <Link to="/companies" className="landing-outline-button landing-company-link">View all companies</Link>
+        </div>
       </div>
 
-      {/* Flowing logo strip */}
-      <div className="marquee-pause relative mt-14 overflow-hidden">
-
-        {/* Edge fades */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-slate-950 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-slate-950 to-transparent" />
-
-        <div className="flex w-max animate-marquee gap-6">
-          {track.map((company, i) => (
+      <div className="company-flow-mask">
+        <div
+          className="company-flow-track animate-marquee"
+          style={{ animationDuration: `${Math.max(60, companies.length * 5)}s` }}
+        >
+          {track.map((company, index) => (
             <Link
-              key={`${company._id}-${i}`}
+              key={`${company._id}-${index}`}
               to={`/companies/${company.slug}`}
-              className="flex w-64 shrink-0 items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:-translate-y-1 hover:border-cyan-500"
+              className="company-flow-card"
             >
               <CompanyIcon company={company} size="md" />
-
-              <div className="min-w-0">
-                <h3 className="truncate text-lg font-semibold text-white">
-                  {company.name}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {company.totalQuestions || 0} questions
-                </p>
-              </div>
+              <span className="company-flow-card-copy">
+                <strong>{company.name}</strong>
+                <small>{company.totalQuestions || 0} questions</small>
+              </span>
+              <span className="company-flow-arrow" aria-hidden="true">→</span>
             </Link>
           ))}
         </div>
-
       </div>
     </section>
   );

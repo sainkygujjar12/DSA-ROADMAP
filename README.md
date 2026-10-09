@@ -85,12 +85,9 @@ npm install
 
 ## 🔑 Environment Variables
 
-Create a `.env` file inside the **server** directory.
-
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-```
+Copy `server/.env.example` to `server/.env` and fill in your MongoDB connection,
+JWT secret, and email settings. The API runs on port **8000**. Copy
+`client/.env.example` to `client/.env` if you need Google sign-in configuration.
 
 > **Note:** Environment files are excluded from Git using `.gitignore` for security.
 
@@ -115,8 +112,14 @@ npm run dev
 Open your browser and visit:
 
 ```
-http://localhost:5173
+http://localhost:5174
 ```
+
+Use this exact address in the IDE preview. Vite uses a fixed port so the preview
+does not point at a different server. To use the previous address explicitly,
+run `npm run dev -- --port 5173` in `client/`. The development API accepts both
+local origins. Google sign-in additionally requires the chosen address in the
+Google Cloud client's **Authorized JavaScript origins**.
 
 ---
 
@@ -130,21 +133,26 @@ http://localhost:5173
 - Responsive UI
 - Search and filtering
 - Dashboard overview
+- Email verification, Google sign-in and password recovery
+- Personal progress, bookmarks and question notes
+- Light/dark themes and reduced-motion settings
+- Owner-only admin dashboard
+
+## Deployment and live updates
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the free Render + MongoDB Atlas setup,
+Brevo HTTPS email, MongoDB backups, and GitHub checks before automatic deployment.
+The Render Blueprint is [render.yaml](render.yaml). Only the verified account
+`sainkygurjar12@gmail.com` can access `/admin`.
 
 ---
 
 ## 🚀 Future Enhancements
 
-- User Authentication
-- Google Sign-In
-- Progress Tracking
-- Bookmark Questions
 - Daily Coding Challenges
-- Notes Section
 - Contest Tracker
 - Interview Experiences
 - Discussion Forum
-- Dark Mode
 
 ---
 

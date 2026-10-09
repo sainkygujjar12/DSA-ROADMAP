@@ -1,32 +1,41 @@
 import { Link } from "react-router-dom";
+import { FaFileAlt, FaPen } from "react-icons/fa";
 import DifficultyText from "../ui/DifficultyText";
+import CompanyIcon from "../ui/CompanyIcon";
 
 function QuestionRow({
   question,
   onToggleSolved,
   onToggleBookmark,
+  onOpenNotes,
+  showNotes = false,
   isSolving,
   isBookmarking
 }) {
   const solved = question.solved || false;
   const bookmarked = question.bookmarked || false;
+  const canToggleSolved = typeof onToggleSolved === "function";
+  const canToggleBookmark = typeof onToggleBookmark === "function";
+  const canOpenNotes = typeof onOpenNotes === "function";
+  const hasNote = Boolean(question.note?.trim());
 
   return (
-    <tr className="group border-b border-slate-800/60 transition-colors hover:bg-slate-900/60">
+    <tr className="group border-b border-white/5 transition-colors hover:bg-white/[0.04]">
       {/* Solved Checkbox */}
-      <td className="px-4 py-3.5 w-12">
+      <td className="px-4 py-4 w-12">
         <button
-          onClick={() => onToggleSolved(question._id)}
-          disabled={isSolving}
+          type="button"
+          onClick={() => onToggleSolved?.(question._id)}
+          disabled={!canToggleSolved || isSolving}
           aria-label={solved ? "Mark as unsolved" : "Mark as solved"}
-          className={`flex h-5 w-5 items-center justify-center rounded border transition ${
+          className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
             solved
-              ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
-              : "border-slate-700 text-transparent hover:border-slate-500"
+              ? "border-emerald-500 bg-emerald-500 text-white"
+              : "border-white/20 bg-transparent text-transparent hover:border-white/40"
           }`}
         >
           {isSolving ? (
-            <span className="text-[10px]">⏳</span>
+            <span className="text-[10px] animate-spin">⏳</span>
           ) : (
             <svg
               viewBox="0 0 24 24"
@@ -46,41 +55,68 @@ function QuestionRow({
       </td>
 
       {/* Bookmark */}
-      <td className="px-4 py-3.5 w-12 text-center">
+      <td className="px-4 py-4 w-12 text-center">
         <button
-          onClick={() => onToggleBookmark(question._id)}
-          disabled={isBookmarking}
+          type="button"
+          onClick={() => onToggleBookmark?.(question._id)}
+          disabled={!canToggleBookmark || isBookmarking}
           aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
-          className={`text-base transition ${
+          className={`text-lg transition-colors ${
             bookmarked
-              ? "text-yellow-400"
-              : "text-slate-700 hover:text-slate-500"
+              ? "text-yellow-500"
+              : "text-zinc-300 hover:text-zinc-500"
           }`}
         >
           {bookmarked ? "★" : "☆"}
         </button>
       </td>
 
+      {showNotes && (
+        <td className="px-4 py-4 text-center">
+          <button
+            type="button"
+            onClick={() => onOpenNotes?.(question)}
+            disabled={!canOpenNotes}
+            aria-label={hasNote ? "Edit note" : "Add note"}
+            title={hasNote ? "Edit note" : "Add note"}
+            className={`question-notes-button ${hasNote ? "has-note" : ""}`}
+          >
+            {hasNote ? <FaPen /> : <FaFileAlt />}
+          </button>
+        </td>
+      )}
+
       {/* Question Title */}
-      <td className="px-4 py-3.5">
+      <td className="px-4 py-4">
         <Link
           to={`/questions/${question.slug}`}
-          className={`font-medium transition group-hover:text-cyan-400 ${
-            solved ? "text-slate-500 line-through" : "text-slate-200"
+          className={`font-semibold transition-colors ${
+              solved ? "text-slate-500 line-through" : "text-slate-100 hover:text-[#00c99a]"
           }`}
         >
           {question.title}
         </Link>
+        {question.isPremium && (
+          <span className="ml-2 text-xs text-amber-400" title="Requires LeetCode Premium">LeetCode Premium</span>
+        )}
       </td>
 
       {/* Difficulty */}
-      <td className="px-4 py-3.5">
+      <td className="px-4 py-4">
         <DifficultyText difficulty={question.difficulty} />
       </td>
 
-      {/* Companies Count */}
-      <td className="px-4 py-3.5 text-xs text-slate-500 text-center">
-        {question.companies?.length || 0}
+      {/* Companies Logos */}
+      <td className="px-4 py-4">
+        <div className="flex items-center gap-2 overflow-x-auto max-w-[200px] py-1">
+          {question.companies && question.companies.length > 0 ? (
+            question.companies.map((company, idx) => (
+              <CompanyIcon key={idx} company={company} size="sm" />
+            ))
+          ) : (
+            <span className="text-xs text-slate-500">No company data</span>
+          )}
+        </div>
       </td>
     </tr>
   );

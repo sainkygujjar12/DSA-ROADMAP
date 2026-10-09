@@ -1,258 +1,38 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  FaArrowRight,
-  FaCode,
-  FaFire,
-  FaTrophy,
-} from "react-icons/fa";
-
+import { FaArrowRight, FaCheck, FaCode } from "react-icons/fa";
 import { getStats } from "../../services/statsService";
 
-function Hero() {
-  const [stats, setStats] = useState([
-    { title: "—", subtitle: "Questions" },
-    { title: "—", subtitle: "Companies" },
-    { title: "—", subtitle: "Topics" },
-    { title: "—", subtitle: "Sheets" },
-  ]);
-
+const previewTopics = ["arrays", "strings", "linked-list", "binary-search", "trees", "dynamic-programming"];
+export default function Hero({ roadmap }) {
+  const [stats, setStats] = useState(null);
   useEffect(() => {
-    getStats()
-      .then((res) => {
-        const d = res.data;
-        setStats([
-          { title: `${d.totalQuestions}+`, subtitle: "Questions" },
-          { title: `${d.totalCompanies}+`, subtitle: "Companies" },
-          { title: `${d.totalTopics}+`, subtitle: "Topics" },
-          { title: `${d.totalSheets}+`, subtitle: "Sheets" },
-        ]);
-      })
-      .catch((err) => console.error(err));
+    let active = true;
+    getStats().then(response => { if (active) setStats(response.data); }).catch(() => {});
+    return () => { active = false; };
   }, []);
-
-  return (
-    <section className="relative overflow-hidden bg-slate-950">
-
-      {/* Background Glow */}
-
-      <div className="absolute left-1/2 top-20 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-cyan-600/20 blur-[150px]" />
-
-      <div className="absolute right-10 top-10 h-72 w-72 rounded-full bg-teal-600/20 blur-[120px]" />
-
-      <div className="mx-auto grid min-h-[90vh] max-w-7xl items-center gap-16 px-6 py-20 lg:grid-cols-2">
-
-        {/* Left */}
-
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: -60,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          transition={{
-            duration: 0.7,
-          }}
-        >
-
-          <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-5 py-2 text-sm text-cyan-400">
-            🚀 The Ultimate DSA Platform
-          </span>
-
-          <h1 className="mt-8 text-6xl font-extrabold leading-tight text-white">
-
-            Master
-
-            <span className="block bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent">
-
-              Data Structures
-
-            </span>
-
-            & Algorithms
-
-          </h1>
-
-          <p className="mt-8 max-w-xl text-lg leading-8 text-slate-400">
-
-            Learn DSA using an interactive roadmap,
-            company-wise preparation,
-            sheet-wise practice,
-            progress tracking,
-            bookmarks,
-            notes,
-            and much more.
-
-          </p>
-
-          <div className="mt-10 flex flex-wrap gap-4">
-
-            <Link
-              to="/roadmap"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 px-8 py-4 font-semibold transition hover:scale-105"
-            >
-              Start Learning
-
-              <FaArrowRight />
-            </Link>
-
-            <Link
-              to="/companies"
-              className="rounded-xl border border-slate-700 px-8 py-4 transition hover:border-cyan-500 hover:bg-slate-900"
-            >
-              Explore Companies
-            </Link>
-
-          </div>
-
-          {/* Stats */}
-
-          <div className="mt-14 grid grid-cols-2 gap-5 lg:grid-cols-4">
-
-            {stats.map((item) => (
-              <div
-                key={item.subtitle}
-                className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center"
-              >
-                <h2 className="text-3xl font-bold text-cyan-500">
-                  {item.title}
-                </h2>
-
-                <p className="mt-2 text-slate-400">
-                  {item.subtitle}
-                </p>
-              </div>
-            ))}
-
-          </div>
-
-        </motion.div>
-
-        {/* Right */}
-
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: 60,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          transition={{
-            duration: 0.7,
-          }}
-          className="relative"
-        >
-
-          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-8 shadow-2xl">
-
-            <div className="mb-8 flex items-center justify-between">
-
-              <h2 className="text-2xl font-bold">
-                Your Progress
-              </h2>
-
-              <FaCode className="text-3xl text-cyan-500" />
-
-            </div>
-
-            <div className="space-y-5">
-
-              <div className="rounded-xl bg-slate-800 p-5">
-
-                <div className="flex justify-between">
-
-                  <span>Arrays</span>
-
-                  <span>90%</span>
-
-                </div>
-
-                <div className="mt-3 h-3 rounded-full bg-slate-700">
-
-                  <div className="h-3 w-[90%] rounded-full bg-cyan-500" />
-
-                </div>
-
-              </div>
-
-              <div className="rounded-xl bg-slate-800 p-5">
-
-                <div className="flex justify-between">
-
-                  <span>Graphs</span>
-
-                  <span>70%</span>
-
-                </div>
-
-                <div className="mt-3 h-3 rounded-full bg-slate-700">
-
-                  <div className="h-3 w-[70%] rounded-full bg-teal-500" />
-
-                </div>
-
-              </div>
-
-              <div className="rounded-xl bg-slate-800 p-5">
-
-                <div className="flex items-center gap-3">
-
-                  <FaFire className="text-orange-500" />
-
-                  <div>
-
-                    <h3 className="font-semibold">
-                      42 Day Streak
-                    </h3>
-
-                    <p className="text-sm text-slate-400">
-                      Keep solving daily!
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <div className="rounded-xl bg-slate-800 p-5">
-
-                <div className="flex items-center gap-3">
-
-                  <FaTrophy className="text-yellow-500" />
-
-                  <div>
-
-                    <h3 className="font-semibold">
-                      342 Questions Solved
-                    </h3>
-
-                    <p className="text-sm text-slate-400">
-                      You're doing great.
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </motion.div>
-
-      </div>
-
-    </section>
-  );
+  const solved = roadmap.topics.reduce((total, topic) => total + (topic.solvedQuestions || 0), 0);
+  return <section className="premium-hero landing-container">
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45 }} className="premium-hero-copy">
+      <span className="page-kicker"><span className="hero-status-dot" /> A LITTLE PRACTICE. A LOT OF POSSIBILITY.</span>
+      <h1>Your next chapter<br />starts with <span>one problem.</span></h1>
+      <p>A clear roadmap. Real interview questions. A workspace that keeps your progress in sight and your next step simple.</p>
+      <div className="premium-hero-actions"><Link to={roadmap.isAuthenticated ? "/dashboard" : "/roadmap"} className="settings-primary">{roadmap.isAuthenticated ? "Continue learning" : "Find your starting point"} <FaArrowRight /></Link><Link to="/companies">Explore companies <FaArrowRight /></Link></div>
+      <div className="premium-hero-proof"><span><FaCheck /> Learn at your pace</span><span><FaCheck /> Track every win</span></div>
+      <div className="premium-hero-stats">{[[stats?.totalQuestions, "Questions"], [stats?.totalCompanies, "Companies"], [stats?.totalTopics, "Topics"]].map(([value, label]) => <div key={label}><strong>{value?.toLocaleString() || "—"}</strong><span>{label}</span></div>)}</div>
+    </motion.div>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .5, delay: .1 }} className="hero-workspace">
+      <div className="hero-workspace-top"><span><FaCode /> YOUR LEARNING PATH</span><i /><i /><i /></div>
+      <div className="hero-workspace-heading"><div><p>{roadmap.isAuthenticated ? "WELCOME BACK" : "ONE STEP AT A TIME"}</p><h2>{roadmap.isAuthenticated ? "Keep your momentum." : "Build a strong foundation."}</h2></div><span className="hero-progress-label">{roadmap.isAuthenticated ? `${solved} solved` : "Start here"}</span></div>
+      <div className="hero-path-list">{previewTopics.map((slug, index) => {
+        const topic = roadmap.topics.find(topic => topic.slug === slug);
+        const count = roadmap.isAuthenticated ? topic?.solvedQuestions || 0 : 0;
+        const total = topic?.totalQuestions || 0;
+        const progress = total ? Math.min(100, count / total * 100) : 0;
+        return <Link key={slug} to={`/roadmap/${slug}`} className="hero-path-card"><span className="hero-path-number">{String(index + 1).padStart(2, '0')}</span><div><h3>{topic?.name || slug.split('-').map(word => word[0].toUpperCase() + word.slice(1)).join(' ')}</h3><p>{roadmap.loading ? "Loading…" : roadmap.error ? "Explore topic" : roadmap.isAuthenticated ? `${count} of ${total} solved` : `${total} questions`}</p>{roadmap.isAuthenticated && <span className="hero-path-progress"><span style={{width:`${progress}%`}} /></span>}</div><FaArrowRight /></Link>;
+      })}</div>
+      <Link to="/roadmap" className="hero-workspace-footer">View the full roadmap <FaArrowRight /></Link>
+    </motion.div>
+  </section>;
 }
-
-export default Hero;

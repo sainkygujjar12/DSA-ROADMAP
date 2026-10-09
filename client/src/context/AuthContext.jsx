@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useContext,
@@ -16,7 +17,7 @@ export function AuthProvider({ children }) {
 
   const [user, setUser] = useState(() => {
     const cached = localStorage.getItem("user");
-    return cached ? JSON.parse(cached) : null;
+    try { return cached ? JSON.parse(cached) : null; } catch { return null; }
   });
 
   // True while we're confirming the cached token/user
@@ -58,9 +59,8 @@ export function AuthProvider({ children }) {
         if (!cancelled) {
           setUser(res.data);
         }
-      } catch (err) {
-        // Token expired/invalid — log out cleanly
-        if (!cancelled) {
+      } catch (error) {
+        if (!cancelled && error.response?.status === 401) {
           setUser(null);
           setToken(null);
         }
@@ -81,7 +81,20 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const expire = () => {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    };
+    window.addEventListener("auth:expired", expire);
+    return () => window.removeEventListener("auth:expired", expire);
+  }, []);
+
   const login = (userData, jwtToken) => {
+    localStorage.setItem("token", jwtToken);
+    localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
     setToken(jwtToken);
   };

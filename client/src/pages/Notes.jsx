@@ -13,20 +13,17 @@ function Notes() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState([]);
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
 
-  const fetchNotes = async () => {
-    try {
-      const response = await getProgress();
-      setNotes(response.data.notes || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
+
+  useEffect(() => {
+    let active = true;
+    getProgress().then(response => { if (active) setNotes(response.data.notes || []); })
+      .catch(error => console.error(error))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const handleDelete = async (questionId) => {
     const confirmDelete = window.confirm(

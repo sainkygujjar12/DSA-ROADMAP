@@ -1,29 +1,21 @@
+import { FaArrowRight, FaRocket } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 
 function CTA() {
+  const { isAuthenticated } = useAuth();
   return (
-    <section className="bg-slate-950 py-28">
-
-      <div className="mx-auto max-w-5xl rounded-3xl bg-gradient-to-r from-cyan-600 to-teal-600 px-10 py-20 text-center">
-
-        <h2 className="text-5xl font-bold text-white">
-          Ready to Crack Your Dream Company?
-        </h2>
-
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-cyan-100">
-          Start your DSA journey with curated questions,
-          company tags and interview sheets.
-        </p>
-
-        <Link
-          to="/register"
-          className="mt-10 inline-block rounded-xl bg-white px-8 py-4 font-semibold text-slate-900 transition hover:scale-105"
-        >
-          Start Learning
-        </Link>
-
+    <section className="landing-cta-section">
+      <div className="landing-container">
+        <div className="landing-cta">
+          <div className="landing-cta-glow" />
+          <span className="landing-cta-icon"><FaRocket /></span>
+          <p className="landing-eyebrow">Your next breakthrough is one session away</p>
+          <h2>Turn preparation into momentum<span>.</span></h2>
+          <p className="landing-cta-copy">Choose a topic, solve one problem, and let the roadmap keep the bigger picture clear.</p>
+          <Link to={isAuthenticated ? "/dashboard" : "/register"} className="landing-primary-button">{isAuthenticated ? "Continue learning" : "Start preparing"} <FaArrowRight /></Link>
+        </div>
       </div>
-
     </section>
   );
 }

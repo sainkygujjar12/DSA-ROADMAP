@@ -2,6 +2,14 @@
 
 A comprehensive MERN Stack application designed to help students prepare for coding interviews through structured Data Structures & Algorithms (DSA) roadmaps, company-wise questions, and curated practice sheets. The platform provides an organised learning path to strengthen problem-solving skills and improve interview readiness.
 
+## Architecture diagrams
+
+- [Application flow diagram](docs/FLOW.md): browsing, sign-in, progress saves and owner-only admin access.
+- [High-level design (HLD)](docs/HLD.md): frontend, API, MongoDB, external services and deployment responsibilities.
+- [Deployment and CI/CD guide](DEPLOYMENT.md): setup, live updates, backups and recovery.
+
+The diagrams use Mermaid and render directly on GitHub.
+
 ---
 
 ## ✨ Features

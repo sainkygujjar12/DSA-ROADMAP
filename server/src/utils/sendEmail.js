@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const { sendGmailEmail } = require('./gmailEmail');
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 
 // Uses SMTP credentials from env. Works with Gmail (using an
@@ -25,6 +26,7 @@ function getTransporter() {
 }
 
 async function sendEmail({ to, subject, html }) {
+  if (process.env.EMAIL_PROVIDER === 'gmail') return sendGmailEmail({ to, subject, html });
   // Render Free blocks common SMTP ports. HTTPS transactional email works
   // without an always-on worker or a new runtime dependency.
   if (process.env.EMAIL_PROVIDER === 'smtp2go') {

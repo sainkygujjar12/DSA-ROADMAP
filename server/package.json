@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "email:authorize": "node scripts/authorizeGmail.js",
     "seed": "node src/seedAll.js",
     "seed:questions": "node src/seedQuestions.js",
     "seed:expansion": "node src/seedExpansion.js",

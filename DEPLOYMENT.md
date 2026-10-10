@@ -92,6 +92,46 @@ new, strong `JWT_SECRET` with at least 32 characters; keep it stable across depl
 Alternatively, return to **New > Blueprint** to import those settings from the repo.
 Choose one path; do not create duplicate services for the same app.
 
+### Gmail SMTP on a host that permits SMTP
+
+The application also supports Gmail SMTP. The exact hostname is `smtp.gmail.com`
+(with the dot after `smtp`), and the TLS/STARTTLS port is `587`.
+**This configuration does not work on Render Free**, which blocks outbound ports
+25, 465 and 587. Use it only on a host/plan that permits those connections. The
+repository's Free Blueprint continues to use Gmail HTTPS; changing the SMTP
+hostname or port cannot remove Render's network restriction.
+
+On an SMTP-capable host, replace the email-provider variables in the hosting
+dashboard with:
+
+```dotenv
+EMAIL_PROVIDER=smtp
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=YOUR_GMAIL_ADDRESS
+EMAIL_PASS=YOUR_NEW_GMAIL_APP_PASSWORD
+EMAIL_FROM=YOUR_GMAIL_ADDRESS
+```
+
+Use the same Gmail address for `EMAIL_USER` and `EMAIL_FROM`. Enable Google
+2-Step Verification and create an app password where your account permits it;
+`EMAIL_PASS` is not your ordinary Google password or OAuth client secret. Revoke
+any app password previously shared in chat and use a replacement. Set credentials
+directly in the hosting environment; local `.env` files are excluded from Git
+and Docker builds and are not copied to Render by a push.
+
+Keep the existing database, JWT, client URL, port and Google sign-in settings.
+The `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` and
+`SMTP2GO_API_KEY` variables are not used when `EMAIL_PROVIDER=smtp`. Save and
+redeploy, then verify registration, OTP resend and password reset using accounts
+you control on the deployed website. A successful local connection does not prove
+the deployed host can connect. SMTP transport failures never become mocked
+success in production.
+
+Sources: [Google SMTP settings](https://support.google.com/mail/answer/7104828),
+[Google app passwords](https://support.google.com/accounts/answer/185833),
+[Render Free restrictions](https://render.com/docs/free).
+
 ## Your administrator account
 
 Only **sainkygurjar12@gmail.com**, after email verification, can access `/admin`.

@@ -1,5 +1,9 @@
 # Gmail sender setup for Render Free
 
+This guide uses `EMAIL_PROVIDER=gmail` (HTTPS). If you specifically want
+`smtp.gmail.com`, use the [SMTP deployment settings](../DEPLOYMENT.md#gmail-smtp-on-a-host-that-permits-smtp)
+on a host that permits SMTP. Render Free blocks Gmail's SMTP ports.
+
 The backend supports Gmail's HTTPS API for verification and password-reset codes.
 No custom domain or SMTP connection is required. Sender authorization is separate
 from users' Google sign-in: users never grant the app permission to their mailbox.

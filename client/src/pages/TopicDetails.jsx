@@ -1,3 +1,4 @@
+import usePracticeList from "../hooks/usePracticeList";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
@@ -20,12 +21,14 @@ function TopicDetails() {
   const [topic, setTopic] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { search: searchInput, difficulty, pattern, page, setField } = usePracticeList(!loading);
+  const setDifficulty = value => setField("difficulty", value);
+  const setPattern = value => setField("pattern", value);
+  const setPage = value => setField("page", value);
 
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("All");
-  const [pattern, setPattern] = useState("All");
-  const [page, setPage] = useState(1);
+  const setSearchInput = value => setField("search", value);
+  const [search, setSearch] = useState(searchInput.trim());
+
   const [totalPages, setTotalPages] = useState(1);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [topicStats, setTopicStats] = useState(null);
@@ -40,7 +43,6 @@ function TopicDetails() {
   // which removed focus from the input after the first character.
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setPage(1);
       setSearch(searchInput.trim());
     }, 300);
 
@@ -48,6 +50,7 @@ function TopicDetails() {
   }, [searchInput]);
 
   useEffect(() => {
+    let cancelled = false;
     async function loadTopic() {
       try {
         setLoading(true);
@@ -58,21 +61,24 @@ function TopicDetails() {
           pattern,
           search,
         });
+        if (cancelled) return;
         setTopic(res?.data?.topic || null);
         setQuestions(res?.data?.questions || []);
         setTotalPages(res?.data?.pagination?.pages || 1);
         setTotalQuestions(res?.data?.pagination?.total || 0);
         setTopicStats(res?.data?.stats || null);
       } catch (err) {
+        if (cancelled) return;
         console.error("TopicDetails error:", err);
         setTopic(null);
         setQuestions([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadTopic();
+    return () => { cancelled = true; };
   }, [slug, page, difficulty, pattern, search, limit]);
 
   const handleToggleSolved = async (id) => {
@@ -127,20 +133,18 @@ function TopicDetails() {
 
   const handleDifficultyChange = (val) => {
     setDifficulty(val);
-    setPage(1);
   };
 
   const handlePatternChange = (val) => {
     setPattern(val);
-    setPage(1);
   };
 
   const patternOptions = useMemo(() => {
-    const allTags = questions.flatMap((q) => q?.tags || []);
+    const allTags = [pattern, ...questions.flatMap((q) => q?.tags || [])].filter(tag => tag !== "All");
     return ["All", ...new Set(allTags)].sort((a, b) =>
       a === "All" ? -1 : a.localeCompare(b)
     );
-  }, [questions]);
+  }, [questions, pattern]);
 
   const filteredQuestions = questions; // Now handled by server
 

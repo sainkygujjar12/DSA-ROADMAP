@@ -1,3 +1,4 @@
+import usePracticeList from "../hooks/usePracticeList";
 import { useEffect, useMemo, useState } from "react";
 
 import DashboardLayout from "../components/layout/DashboardLayout";
@@ -10,10 +11,10 @@ import { getProgress } from "../services/progressService";
 
 function Bookmarks() {
   const [loading, setLoading] = useState(true);
+  const { search, difficulty, setField } = usePracticeList(!loading);
+  const setSearch = value => setField("search", value);
+  const setDifficulty = value => setField("difficulty", value);
   const [questions, setQuestions] = useState([]);
-
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("All");
 
   useEffect(() => {
     async function fetchBookmarks() {
@@ -65,9 +66,7 @@ function Bookmarks() {
   return (
     <DashboardLayout>
 
-      <h1 className="mb-8 text-4xl font-bold">
-        ⭐ Bookmarked Questions
-      </h1>
+      <div className="saved-page-heading"><p className="eyebrow-label">Your library</p><h1>Bookmarked questions</h1><p>Keep the questions you want to revisit in one place.</p></div>
 
       <SearchBar
         value={search}

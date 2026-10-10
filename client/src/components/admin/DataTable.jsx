@@ -4,9 +4,9 @@ function DataTable({
   renderActions,
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+    <div className="admin-table overflow-x-auto">
       <table className="w-full">
-        <thead className="bg-slate-800">
+        <thead >
           <tr>
             {columns.map((column) => (
               <th
@@ -42,7 +42,7 @@ function DataTable({
             data.map((item) => (
               <tr
                 key={item._id}
-                className="border-t border-slate-800 hover:bg-slate-800 transition"
+                className="admin-table-row"
               >
                 {columns.map((column) => (
                   <td

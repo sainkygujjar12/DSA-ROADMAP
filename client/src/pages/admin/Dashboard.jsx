@@ -57,7 +57,7 @@ function Dashboard() {
   return (
     <AdminLayout>
       <h1 className="mb-8 text-4xl font-bold">
-        👑 Admin Dashboard
+        Admin Dashboard
       </h1>
 
       <StatsGrid stats={stats} />

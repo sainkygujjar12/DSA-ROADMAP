@@ -8,11 +8,18 @@ const topics = require('../../server/src/data/topics.js').map((topic, i) => ({
 const user = { _id: 'fixture-user', name: 'Workspace Learner', email: 'learner@example.com', role: 'user', authProvider: 'local' };
 const dashboard = { user, stats: { totalQuestions: 840, totalSolved: 8, easySolved: 5, mediumSolved: 3, hardSolved: 0, streak: 2, bestStreak: 4, overallProgress: 1 }, activity: [] };
 const sheetFixtures = require('../../server/src/data/curatedSheets').sheets.map(source => ({
-  sheet: { ...source, entries: undefined, totalQuestions: source.entries.length, sectionCount: new Set(source.entries.map(entry => entry.section)).size },
+  sheet: { ...source, _id: source.slug, entries: undefined, totalQuestions: source.entries.length, sectionCount: new Set(source.entries.map(entry => entry.section)).size },
   questions: source.entries.map(entry => ({ ...entry, _id: entry.questionSlug, slug: entry.questionSlug, entryKey: `${source.slug}:${entry.order}`, sourceOrder: entry.order, solved: false, bookmarked: false, companies: [], tags: [] })),
 }));
 
-async function prepare(page, authenticated = true) {
+const company = { _id: 'company-google', name: 'Google', slug: 'google', totalQuestions: 70 };
+const practiceQuestions = Array.from({ length: 70 }, (_, i) => ({
+  _id: `question-${i + 1}`, slug: `practice-${i + 1}`, title: `Practice question ${i + 1}`,
+  difficulty: ['Easy', 'Medium', 'Hard'][i % 3], topic: topics[0], companies: [company], tags: ['Two pointers'],
+  description: 'Find an efficient solution and explain the time complexity.', solved: false,
+}));
+
+async function prepare(page, authenticated = true, role = 'user') {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(({ user, authenticated }) => {
@@ -21,18 +28,30 @@ async function prepare(page, authenticated = true) {
       localStorage.setItem('token', 'isolated-browser-fixture');
       localStorage.setItem('user', JSON.stringify(user));
     }
-  }, { user, authenticated });
+  }, { user: { ...user, role }, authenticated });
   await page.route('**/api/**', async route => {
-    const path = new URL(route.request().url()).pathname;
+    const url = new URL(route.request().url());
+    const path = url.pathname;
     let data;
-    if (path === '/api/auth/me') data = user;
+    if (path === '/api/auth/me') data = { ...user, role };
     else if (path === '/api/dashboard') data = dashboard;
     else if (path === '/api/topics') data = topics;
     else if (path === '/api/sheets') data = sheetFixtures.map(fixture => fixture.sheet);
     else if (path.startsWith('/api/sheets/')) data = sheetFixtures.find(fixture => path.endsWith(fixture.sheet.slug));
-    else if (path === '/api/progress') data = { solvedQuestions: [], bookmarkedQuestions: [], notes: [] };
+    else if (path === '/api/progress') data = { solvedQuestions: [], bookmarkedQuestions: practiceQuestions.slice(0, 3), notes: [{ _id: 'note-1', question: practiceQuestions[0], content: 'Try two pointers.' }] };
     else if (path === '/api/stats') data = { totalQuestions: 840, totalCompanies: 103, totalTopics: topics.length, totalSheets: 5 };
-    else if (path.startsWith('/api/topics/')) data = { topic: topics.find(topic => path.endsWith(topic.slug)), questions: [] };
+    else if (path.startsWith('/api/topics/')) {
+      const filtered = practiceQuestions.filter(question => (!url.searchParams.get('search') || question.title.toLowerCase().includes(url.searchParams.get('search').toLowerCase())) && (!url.searchParams.get('difficulty') || url.searchParams.get('difficulty') === 'All' || question.difficulty === url.searchParams.get('difficulty')));
+      const number = Number(url.searchParams.get('page') || 1);
+      data = { topic: topics.find(topic => path.endsWith(topic.slug)), questions: filtered.slice((number - 1) * 10, number * 10), pagination: { pages: Math.ceil(filtered.length / 10), total: filtered.length } };
+    }
+    else if (path === '/api/companies') data = [company];
+    else if (path.startsWith('/api/companies/')) data = { company, questions: practiceQuestions };
+    else if (path.startsWith('/api/progress/last-visited/')) data = {};
+    else if (path === '/api/questions') data = practiceQuestions;
+    else if (path.startsWith('/api/questions/')) data = practiceQuestions.find(question => path.endsWith(question.slug)) || sheetFixtures.flatMap(fixture => fixture.questions).find(question => path.endsWith(question.slug));
+    else if (path === '/api/admin/dashboard') data = { stats: { totalQuestions: 70, totalUsers: 1 }, recentQuestions: practiceQuestions.slice(0, 3) };
+    else if (path === '/api/users') data = [user];
     else return route.fulfill({ status: 404, json: { success: false, message: `Unexpected test request: ${path}` } });
     await route.fulfill({ json: { success: true, data } });
   });
@@ -161,5 +180,148 @@ for (const fixture of sheetFixtures) test(`${fixture.sheet.name}: full list, las
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.locator('.sheet-source-note summary').click();
   await expect(page.getByRole('link', { name: 'Original sheet' })).toHaveAttribute('href', fixture.sheet.sourceUrl);
+  expect(errors).toEqual([]);
+});
+
+
+test('topic page six survives question Back, browser Back and reload', async ({ page }) => {
+  const errors = await prepare(page);
+  await page.goto(`/roadmap/${topics[0].slug}?page=6&pattern=Two+pointers`);
+  const listURL = page.url();
+  const question = page.getByRole('link', { name: 'Practice question 58', exact: true });
+  await expect(question).toBeVisible();
+  await question.scrollIntoViewIfNeeded();
+  const position = await page.evaluate(() => scrollY);
+  await question.click();
+  await expect(page.getByRole('heading', { name: 'Practice question 58' })).toBeVisible();
+  await page.getByRole('link', { name: 'Back to questions' }).click();
+  await expect(page).toHaveURL(listURL);
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('Page 6 of 7');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(position, 0);
+  await question.click();
+  await expect(page.getByRole('heading', { name: 'Practice question 58' })).toBeVisible();
+  await page.goBack();
+  await expect(question).toBeVisible();
+  await page.reload();
+  await expect(question).toBeVisible();
+  await expect(page.getByLabel('Pattern', { exact: true })).toHaveValue('Two pointers');
+  await page.getByRole('searchbox').fill('Practice question 1');
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('Page 1 of 2');
+  await expect(page.locator('.question-list-title').first()).toHaveText('Practice question 1');
+  const searchURL = page.url();
+  await page.locator('.question-list-title').first().click();
+  await expect(page.locator('.question-title-row h1')).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(searchURL);
+  await expect(page.getByRole('searchbox')).toHaveValue('Practice question 1');
+  expect(errors).toEqual([]);
+});
+
+test('sheet question returns to its section, page and scroll position', async ({ page }) => {
+  const errors = await prepare(page);
+  const fixture = sheetFixtures[0];
+  await page.goto(`/sheets/${fixture.sheet.slug}?page=6`);
+  const title = fixture.questions[225].title;
+  const question = page.getByRole('link', { name: title, exact: true }).first();
+  await question.scrollIntoViewIfNeeded();
+  const position = await page.evaluate(() => scrollY);
+  await question.click();
+  await expect(page.locator('.question-title-row h1')).toHaveText(title);
+  await page.getByRole('link', { name: 'Back to questions' }).click();
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('Page 6');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(position, 0);
+  await page.getByLabel('Section', { exact: true }).selectOption(fixture.questions[0].section);
+  await expect(page).not.toHaveURL(/page=6/);
+  await page.locator('.sheet-question-copy a').first().click();
+  await expect(page.locator('.question-title-row h1')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByLabel('Section', { exact: true })).toHaveValue(fixture.questions[0].section);
+  expect(errors).toEqual([]);
+});
+
+for (const path of ['/companies/google?difficulty=Medium', '/bookmarks?difficulty=Medium', '/notes']) {
+  test(`question returns to originating list: ${path}`, async ({ page }) => {
+    const errors = await prepare(page);
+    await page.goto(path);
+    const url = page.url();
+    await page.locator('a[href^="/questions/"]').first().click();
+    await expect(page.locator('.question-title-row h1')).toBeVisible();
+    await page.getByRole('link', { name: 'Back to questions' }).click();
+    await expect(page).toHaveURL(url);
+    if (path.includes('difficulty')) await expect(page.getByLabel('Difficulty', { exact: true })).toHaveValue('Medium');
+    expect(errors).toEqual([]);
+  });
+}
+
+// Measure rendered text against its composed background, including translucent cards.
+async function contrastIssues(page) {
+  return page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const rgb = value => {
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = value;
+      context.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
+      return [r, g, b, a / 255];
+    };
+    const blend = (front, back) => {
+      const alpha = front[3] ?? 1;
+      return front.slice(0, 3).map((value, i) => value * alpha + back[i] * (1 - alpha));
+    };
+    const luminance = color => color.reduce((sum, value, i) => {
+      const channel = value / 255;
+      return sum + (channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4) * [.2126, .7152, .0722][i];
+    }, 0);
+    return [...document.querySelectorAll('body *')].flatMap(element => {
+      if (!(element instanceof HTMLElement) || ![...element.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) return [];
+      if (!element.getClientRects().length || element.closest('button:disabled, [aria-hidden="true"]')) return [];
+      const style = getComputedStyle(element);
+      const ancestors = [];
+      for (let parent = element; parent; parent = parent.parentElement) ancestors.unshift(getComputedStyle(parent));
+      if (ancestors.some(style => Number(style.opacity) < .95 || style.visibility === 'hidden' || style.backgroundImage !== 'none')) return [];
+      const background = ancestors.reduce((back, style) => blend(rgb(style.backgroundColor), back), [255, 255, 255]);
+      const foreground = blend(rgb(style.color), background);
+      const a = luminance(foreground), b = luminance(background);
+      const ratio = (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+      const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && Number(style.fontWeight) >= 700);
+      if (ratio >= (large ? 3 : 4.5)) return [];
+      return [{ text: element.textContent.trim().slice(0, 65), class: element.className, parent: element.parentElement.className, ratio: Math.round(ratio * 100) / 100, color: style.color, background }];
+    });
+  });
+}
+
+for (const group of ['public', 'account', 'admin']) test(`light theme route review: ${group}`, async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  const errors = await prepare(page, group !== 'public', group === 'admin' ? 'admin' : 'user');
+  await page.addInitScript(() => {
+    localStorage.setItem('dsa-roadmap-theme', 'light');
+    sessionStorage.setItem('resetEmail', 'learner@example.com');
+    sessionStorage.setItem('resetToken', 'isolated-browser-fixture');
+  });
+  const paths = group === 'public'
+    ? ['/', '/login', '/register', '/forgot-password', '/verify-reset-otp', '/reset-password', '/missing-page']
+    : group === 'admin' ? ['/admin', '/admin/questions', '/admin/topics', '/admin/companies', '/admin/sheets', '/admin/users', '/admin/bulk-import']
+    : ['/dashboard', '/roadmap', `/roadmap/${topics[0].slug}`, '/companies', '/companies/google', '/sheets', `/sheets/${sheetFixtures[0].sheet.slug}`, '/questions/practice-1', '/bookmarks', '/notes', '/profile', '/settings'];
+  const report = {};
+  for (const path of paths) {
+    await page.goto(path);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expect(page.locator('h1').first()).toBeVisible();
+    await expect(page.locator('.ui-loader, .route-loading')).toHaveCount(0);
+    await page.waitForTimeout(350); // Let entrance motion settle before measuring contrast.
+    report[path] = await contrastIssues(page);
+    if (path === `/roadmap/${topics[0].slug}`) {
+      await expect(page.locator('.question-list-title').first()).toHaveCSS('color', 'rgb(32, 36, 49)');
+      await page.screenshot({ path: testInfo.outputPath('light-questions.png'), fullPage: true });
+    }
+    if (path === '/' || path === '/admin') await page.screenshot({ path: testInfo.outputPath(`light-${group}.png`), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    report[`${path}:mobileOverflow`] = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+    await page.setViewportSize({ width: 1440, height: 1000 });
+  }
+  await testInfo.attach('contrast-audit', { body: JSON.stringify(report, null, 2), contentType: 'application/json' });
+  for (const [path, result] of Object.entries(report)) expect(result, path).toEqual(path.endsWith(':mobileOverflow') ? false : []);
   expect(errors).toEqual([]);
 });

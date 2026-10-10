@@ -1,3 +1,4 @@
+import usePracticeList from "../hooks/usePracticeList";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -15,13 +16,13 @@ function CompanyDetails() {
   const { slug } = useParams();
 
   const [loading, setLoading] = useState(true);
+  const { search, difficulty, topic, pattern, setField } = usePracticeList(!loading);
+  const setSearch = value => setField("search", value);
+  const setDifficulty = value => setField("difficulty", value);
+  const setTopic = value => setField("topic", value);
+  const setPattern = value => setField("pattern", value);
   const [company, setCompany] = useState(null);
   const [questions, setQuestions] = useState([]);
-
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("All");
-  const [topic, setTopic] = useState("All");
-  const [pattern, setPattern] = useState("All");
 
   useEffect(() => {
     async function fetchData() {

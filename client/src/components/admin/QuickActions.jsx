@@ -23,7 +23,7 @@ function QuickActions() {
   return (
     <div className="rounded-xl bg-slate-900 border border-slate-800 p-6">
       <h2 className="mb-5 text-2xl font-bold">
-        ⚡ Quick Actions
+        Quick Actions
       </h2>
 
       <div className="grid gap-4 md:grid-cols-2">

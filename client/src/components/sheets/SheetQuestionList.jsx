@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { Link } from "react-router-dom";
+import QuestionLink from "../ui/QuestionLink";
 import { FiBookmark, FiCheck, FiEdit3, FiExternalLink, FiLoader } from "react-icons/fi";
 import DifficultyText from "../ui/DifficultyText";
 
@@ -12,7 +12,7 @@ export default function SheetQuestionList({ questions, onToggleSolved, onToggleB
         <button className="sheet-solve-control" type="button" aria-pressed={!!question.solved} aria-label={`${question.solved ? 'Mark as unsolved' : 'Mark as solved'}: ${question.title}`} disabled={solvingId === question._id} onClick={() => onToggleSolved(question._id)}>
           {solvingId === question._id ? <FiLoader className="animate-spin" /> : question.solved ? <FiCheck /> : <span>{question.sourceOrder || index + 1}</span>}
         </button>
-        <div className="sheet-question-copy"><Link to={`/questions/${question.slug}`}>{question.title}</Link><div><DifficultyText difficulty={question.difficulty} />{question.kind === 'concept' && <span>Concept</span>}</div></div>
+        <div className="sheet-question-copy"><QuestionLink to={`/questions/${question.slug}`}>{question.title}</QuestionLink><div><DifficultyText difficulty={question.difficulty} />{question.kind === 'concept' && <span>Concept</span>}</div></div>
         <div className="sheet-question-actions">
           {/^https?:\/\//.test(question.resourceUrl || question.leetcodeUrl || question.gfgUrl || '') && <a href={question.resourceUrl || question.leetcodeUrl || question.gfgUrl} target="_blank" rel="noopener noreferrer" className="sheet-resource-link" aria-label={`Open resource: ${question.title}`}><span>{question.kind === 'concept' ? 'Study' : 'Open'}</span><FiExternalLink /></a>}
           <button type="button" className={question.bookmarked ? 'is-bookmarked' : ''} aria-label={`${question.bookmarked ? 'Remove bookmark' : 'Bookmark'}: ${question.title}`} aria-pressed={!!question.bookmarked} disabled={bookmarkingId === question._id} onClick={() => onToggleBookmark(question._id)}><FiBookmark /></button>

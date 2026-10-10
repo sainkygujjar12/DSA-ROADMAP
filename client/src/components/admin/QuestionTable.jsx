@@ -1,3 +1,4 @@
+import DifficultyText from "../ui/DifficultyText";
 import DataTable from "./DataTable";
 import CompanyIcon from "../ui/CompanyIcon";
 
@@ -15,17 +16,7 @@ function QuestionTable({
       key: "difficulty",
       label: "Difficulty",
       render: (question) => (
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            question.difficulty === "Easy"
-              ? "bg-green-600"
-              : question.difficulty === "Medium"
-              ? "bg-yellow-600"
-              : "bg-red-600"
-          }`}
-        >
-          {question.difficulty}
-        </span>
+        <DifficultyText difficulty={question.difficulty} />
       ),
     },
     {

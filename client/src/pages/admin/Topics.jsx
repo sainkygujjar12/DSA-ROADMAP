@@ -100,7 +100,7 @@ function Topics() {
 
         <div>
           <h1 className="text-4xl font-bold">
-            🧩 Topics
+            Topics
           </h1>
 
           <p className="mt-2 text-slate-400">

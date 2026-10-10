@@ -4,7 +4,7 @@ import { FaArrowLeft, FaCode } from "react-icons/fa";
 function AuthShell({ eyebrow, title, description, children }) {
   return (
     <main className="auth-shell flex min-h-screen items-center justify-center px-4 py-8 text-white sm:px-6">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-[30px] border border-white/10 bg-[#202023]/70 shadow-2xl shadow-black/30 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="auth-frame grid w-full max-w-6xl overflow-hidden rounded-[30px] border border-white/10 bg-[#202023]/70 shadow-2xl shadow-black/30 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="relative hidden overflow-hidden p-10 lg:block xl:p-14">
           <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-[#665cff]/20 blur-3xl" />
           <div className="absolute -bottom-24 -right-20 h-80 w-80 rounded-full bg-[#00c99a]/10 blur-3xl" />

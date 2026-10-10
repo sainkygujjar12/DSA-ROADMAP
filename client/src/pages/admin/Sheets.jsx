@@ -101,7 +101,7 @@ function Sheets() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold">📋 Sheets</h1>
+          <h1 className="text-4xl font-bold">Sheets</h1>
           <p className="mt-2 text-slate-400">
             Manage all DSA Sheets.
           </p>

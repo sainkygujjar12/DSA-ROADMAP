@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import QuestionLink from "../ui/QuestionLink";
 import { FaFileAlt, FaPen } from "react-icons/fa";
 import DifficultyText from "../ui/DifficultyText";
 import CompanyIcon from "../ui/CompanyIcon";
@@ -20,15 +20,16 @@ function QuestionRow({
   const hasNote = Boolean(question.note?.trim());
 
   return (
-    <tr className="group border-b border-white/5 transition-colors hover:bg-white/[0.04]">
+    <tr className="question-table-row">
       {/* Solved Checkbox */}
       <td className="px-4 py-4 w-12">
         <button
           type="button"
           onClick={() => onToggleSolved?.(question._id)}
           disabled={!canToggleSolved || isSolving}
+          aria-pressed={solved}
           aria-label={solved ? "Mark as unsolved" : "Mark as solved"}
-          className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
+          className={`question-solve-control flex h-5 w-5 items-center justify-center rounded border transition-all ${
             solved
               ? "border-emerald-500 bg-emerald-500 text-white"
               : "border-white/20 bg-transparent text-transparent hover:border-white/40"
@@ -60,8 +61,9 @@ function QuestionRow({
           type="button"
           onClick={() => onToggleBookmark?.(question._id)}
           disabled={!canToggleBookmark || isBookmarking}
+          aria-pressed={bookmarked}
           aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
-          className={`text-lg transition-colors ${
+          className={`question-bookmark-control text-lg transition-colors ${
             bookmarked
               ? "text-yellow-500"
               : "text-zinc-300 hover:text-zinc-500"
@@ -88,14 +90,12 @@ function QuestionRow({
 
       {/* Question Title */}
       <td className="px-4 py-4">
-        <Link
+        <QuestionLink
           to={`/questions/${question.slug}`}
-          className={`font-semibold transition-colors ${
-              solved ? "text-slate-500 line-through" : "text-slate-100 hover:text-[#00c99a]"
-          }`}
+          className={`question-list-title ${solved ? "is-solved" : ""}`}
         >
           {question.title}
-        </Link>
+        </QuestionLink>
         {question.isPremium && (
           <span className="ml-2 text-xs text-amber-400" title="Requires LeetCode Premium">LeetCode Premium</span>
         )}

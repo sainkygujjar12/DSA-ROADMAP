@@ -1,3 +1,4 @@
+import { FiCode, FiLayers, FiBriefcase, FiBookOpen, FiUsers } from "react-icons/fi";
 import StatsCard from "./StatsCard";
 
 function StatsGrid({
@@ -10,36 +11,36 @@ function StatsGrid({
   },
 }) {
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+    <div className="admin-stats-grid">
 
       <StatsCard
         title="Questions"
         value={stats.totalQuestions ?? 0}
-        icon="📚"
+        icon={<FiCode />}
       />
 
       <StatsCard
         title="Topics"
         value={stats.totalTopics ?? 0}
-        icon="🧩"
+        icon={<FiLayers />}
       />
 
       <StatsCard
         title="Companies"
         value={stats.totalCompanies ?? 0}
-        icon="🏢"
+        icon={<FiBriefcase />}
       />
 
       <StatsCard
         title="Sheets"
         value={stats.totalSheets ?? 0}
-        icon="📋"
+        icon={<FiBookOpen />}
       />
 
       <StatsCard
         title="Users"
         value={stats.totalUsers ?? 0}
-        icon="👥"
+        icon={<FiUsers />}
       />
 
     </div>

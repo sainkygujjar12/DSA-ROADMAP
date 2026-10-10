@@ -1,15 +1,6 @@
 function DifficultyText({ difficulty }) {
-  const colors = {
-    Easy: "text-emerald-400",
-    Medium: "text-amber-400",
-    Hard: "text-rose-400",
-  };
-
-  return (
-    <span className={`text-sm font-semibold ${colors[difficulty] || "text-slate-500"}`}>
-      {difficulty}
-    </span>
-  );
+  const level = ["Easy", "Medium", "Hard"].includes(difficulty) ? difficulty.toLowerCase() : "unrated";
+  return <span className={`difficulty-label difficulty-${level}`}>{difficulty}</span>;
 }
 
 export default DifficultyText;

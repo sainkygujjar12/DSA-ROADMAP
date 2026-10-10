@@ -10,9 +10,9 @@ function QuestionTable({
   bookmarkingId
 }) {
   return (
-    <div className="theme-surface overflow-x-auto rounded-2xl border border-white/10 bg-[#242427] shadow-xl shadow-black/10">
+    <div className="question-table overflow-x-auto">
       <table className="min-w-full table-fixed">
-        <thead className="border-b border-white/10 bg-white/[0.03]">
+        <thead >
           <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             <th className="w-12 px-4 py-3 text-left">Status</th>
             <th className="w-12 px-4 py-3 text-center">★</th>
@@ -23,7 +23,7 @@ function QuestionTable({
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-white/5">
+        <tbody >
           {questions.length === 0 ? (
             <tr>
               <td

@@ -4,10 +4,10 @@ import AdminSidebar from "./AdminSidebar";
 function AdminLayout({ children }) {
   return (
     <DashboardLayout>
-      <div className="flex">
+      <div className="admin-workspace">
         <AdminSidebar />
 
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="admin-content">
           {children}
         </main>
       </div>

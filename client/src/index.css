@@ -1540,9 +1540,9 @@ select {
 .question-title-row { display: flex; justify-content: space-between; gap: 18px; margin-top: 14px; }
 .question-title-row h1 { max-width: 720px; margin: 0; color: #f8fafc; font-size: clamp(1.8rem, 4vw, 3.1rem); letter-spacing: -.06em; line-height: 1.04; }
 .question-meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 14px; color: #8f95a2; font-size: 12px; }
-.question-difficulty-easy { color: #10c88d !important; }
-.question-difficulty-medium { color: #f59e0b !important; }
-.question-difficulty-hard { color: #ef3340 !important; }
+.question-difficulty-easy { color: var(--practice-easy); }
+.question-difficulty-medium { color: var(--practice-medium); }
+.question-difficulty-hard { color: var(--practice-hard); }
 .question-solved-badge { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; height: fit-content; border-radius: 999px; padding: 7px 10px; background: rgba(16,200,141,.13); color: #10c88d; font-size: 11px; font-weight: 700; }
 .question-action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
 .question-primary-action, .question-secondary-action { display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; border-radius: 10px; padding: 11px 15px; cursor: pointer; font-size: 12px; font-weight: 700; transition: transform 160ms ease, filter 160ms ease; }
@@ -1733,11 +1733,11 @@ html[data-theme="light"] select {
   color: #172033;
 }
 
-html[data-theme="light"] .text-white { color: #172033 !important; }
+html[data-theme="light"] .text-white:not(button):not(a):not([class*="bg-"]) { color: #172033; }
 html[data-theme="light"] .text-slate-300 { color: #334155 !important; }
-html[data-theme="light"] .text-slate-400 { color: #64748b !important; }
+html[data-theme="light"] .text-slate-400 { color: var(--app-muted) !important; }
 html[data-theme="light"] .text-slate-500,
-html[data-theme="light"] .text-slate-600 { color: #64748b !important; }
+html[data-theme="light"] .text-slate-600 { color: var(--app-muted) !important; }
 html[data-theme="light"] .bg-slate-950,
 html[data-theme="light"] .bg-slate-900 { background-color: #ffffff !important; }
 html[data-theme="light"] .border-slate-800,

@@ -1,3 +1,4 @@
+import TopicIcon from "../common/TopicIcon";
 import DataTable from "./DataTable";
 
 function TopicTable({
@@ -10,9 +11,7 @@ function TopicTable({
       key: "icon",
       label: "Icon",
       render: (topic) => (
-        <span className="text-2xl">
-          {topic.icon}
-        </span>
+        <TopicIcon slug={topic.slug} size={22} />
       ),
     },
     {

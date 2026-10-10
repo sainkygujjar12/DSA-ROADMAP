@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaBookmark,
@@ -31,6 +31,8 @@ const difficultyClass = {
 
 function QuestionDetails() {
   const { slug } = useParams();
+  const { state } = useLocation();
+  const from = typeof state?.from === "string" && /^\/(roadmap|sheets|companies|bookmarks|notes)([/?]|$)/.test(state.from) ? state.from : null;
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState(null);
   const [solved, setSolved] = useState(false);
@@ -132,8 +134,8 @@ function QuestionDetails() {
   return (
     <MainLayout>
       <div className="question-detail-page">
-        <Link to={topicLink} className="question-back-link">
-          <FaArrowLeft /> Back to {question.topic?.name || "practice"}
+        <Link to={from || topicLink} className="question-back-link">
+          <FaArrowLeft /> Back to {from ? "questions" : question.topic?.name || "practice"}
         </Link>
 
         <div className="question-detail-layout">

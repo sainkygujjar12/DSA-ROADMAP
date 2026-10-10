@@ -95,7 +95,7 @@ function Companies() {
 
         <div>
           <h1 className="text-4xl font-bold">
-            🏢 Companies
+            Companies
           </h1>
 
           <p className="mt-2 text-slate-400">

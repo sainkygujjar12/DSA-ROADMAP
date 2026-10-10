@@ -1,3 +1,4 @@
+import usePracticeList from "../hooks/usePracticeList";
 import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft, FaBookOpen, FaChartLine, FaTimes } from "react-icons/fa";
@@ -26,12 +27,13 @@ function SheetDetails() {
   const [sheet, setSheet] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { search, difficulty, pattern, section, page, setField } = usePracticeList(!loading);
+  const setSearch = value => setField("search", value);
+  const setDifficulty = value => setField("difficulty", value);
+  const setPattern = value => setField("pattern", value);
+  const setSection = value => setField("section", value);
+  const setPage = value => setField("page", value);
 
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("All");
-  const [pattern, setPattern] = useState("All");
-  const [section, setSection] = useState("All");
-  const [page, setPage] = useState(1);
   const [solvingId, setSolvingId] = useState(null);
   const [bookmarkingId, setBookmarkingId] = useState(null);
   const [noteQuestion, setNoteQuestion] = useState(null);
@@ -51,7 +53,6 @@ function SheetDetails() {
         ]);
         if (cancelled) return;
         setSheet(res.data.sheet);
-        setSection("All"); setPattern("All"); setDifficulty("All"); setSearch(""); setPage(1);
 
         const noteByQuestionId = new Map(
           (progressResponse?.data?.notes || []).map((item) => [
@@ -263,10 +264,10 @@ function SheetDetails() {
             {sheet.sourceUrl && <details className="sheet-source-note"><summary>About this collection · {sections.length} sections</summary><p>{sheet.sourceNote}</p><div><a href={sheet.sourceUrl} target="_blank" rel="noopener noreferrer">Original sheet ↗</a>{sheet.archiveUrl && <a href={sheet.archiveUrl} target="_blank" rel="noopener noreferrer">Classic edition archive ↗</a>}</div><p>Repeated entries share solved status. Unrated means the source does not supply a difficulty.</p></details>}
 
             <div className="sheet-detail-toolbar">
-              <SearchBar value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+              <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
               <div className="sheet-detail-filters">
-                <FilterDropdown label="Difficulty" options={["All", ...levels]} value={difficulty} onChange={value => { setDifficulty(value); setPage(1); }} />
-                {sections.length > 0 ? <FilterDropdown label="Section" options={["All", ...sections]} value={section} onChange={value => { setSection(value); setPage(1); }} /> : <FilterDropdown label="Pattern" options={patternOptions} value={pattern} onChange={value => { setPattern(value); setPage(1); }} />}
+                <FilterDropdown label="Difficulty" options={["All", ...levels]} value={difficulty} onChange={setDifficulty} />
+                {sections.length > 0 ? <FilterDropdown label="Section" options={["All", ...sections]} value={section} onChange={setSection} /> : <FilterDropdown label="Pattern" options={patternOptions} value={pattern} onChange={setPattern} />}
               </div>
             </div>
 

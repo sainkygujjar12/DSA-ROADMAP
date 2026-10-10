@@ -1,5 +1,6 @@
+import usePracticeList from "../hooks/usePracticeList";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import QuestionLink from "../components/ui/QuestionLink";
 
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Loader from "../components/ui/Loader";
@@ -11,6 +12,7 @@ import {
 
 function Notes() {
   const [loading, setLoading] = useState(true);
+  usePracticeList(!loading);
   const [notes, setNotes] = useState([]);
 
 
@@ -60,7 +62,7 @@ function Notes() {
       <div className="space-y-6">
 
         <h1 className="text-4xl font-bold">
-          📝 My Notes
+          My notes
         </h1>
 
         <p className="text-slate-400">
@@ -84,10 +86,10 @@ function Notes() {
                 key={note._id}
                 className="rounded-xl border border-slate-800 bg-slate-900 p-6"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-wrap items-start justify-between gap-4">
 
                   <div>
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-xl font-semibold">
                       {note.question.title}
                     </h2>
 
@@ -102,19 +104,19 @@ function Notes() {
                         note.question._id
                       )
                     }
-                    className="rounded-lg bg-red-600 px-4 py-2 hover:bg-red-700"
+                    className="note-delete-button"
                   >
-                    🗑 Delete
+                    Delete
                   </button>
 
                 </div>
 
-                <Link
+                <QuestionLink
                   to={`/questions/${note.question.slug}`}
-                  className="mt-6 inline-block text-cyan-500 hover:underline"
+                  className="saved-question-link mt-6 inline-block hover:underline"
                 >
                   Open Question →
-                </Link>
+                </QuestionLink>
               </div>
             ))}
           </div>

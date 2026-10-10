@@ -49,10 +49,11 @@ test('sheet API preserves source order, repeated rows and shared question progre
     { order: 1, title: 'First approach', section: 'Arrays', question: 'q1', resourceUrl: 'https://example.com/1' },
     { order: 3, title: 'Another problem', section: 'Trees', question: 'q2', resourceUrl: 'https://example.com/3' },
   ] };
-  const chain = { populate() { return this; }, async sort() { return [{ _id: 'q2', title: 'A' }, { _id: 'q1', title: 'Z' }]; } };
+  const chain = { populate() { return this; }, sort() { return this; }, async lean() { return [{ _id: 'q2', title: 'A' }, { _id: 'q1', title: 'Z' }]; } };
   const exports = {};
   const mocks = {
-    '../models/Sheet': { findOne: async () => ({ ...metadata, toObject: () => metadata }) },
+    '../utils/catalogCache': require('../src/utils/catalogCache'),
+    '../models/Sheet': { findOne: () => ({ lean: async () => metadata }) },
     '../models/Question': { find: () => chain },
     './progress.service': {
       getUserQuestionFlags: async () => ({ solvedSet: new Set(['q1']), bookmarkedSet: new Set(['q2']) }),
@@ -72,6 +73,7 @@ test('topic totals include unrated imported questions', async () => {
   const chain = { populate() { return this; }, sort() { return this; }, skip() { return this; }, async limit() { return []; } };
   const mocks = {
     '../utils/queryValidation': require('../src/utils/queryValidation'),
+    '../utils/catalogCache': require('../src/utils/catalogCache'),
     '../models/Topic': { findOne: async () => ({ _id: 'topic', slug: 'arrays' }) },
     '../models/Question': { find: () => chain, countDocuments: async () => 13, aggregate: async () => [{ _id: 'Easy', total: 10 }, { _id: 'Unrated', total: 3 }] },
     '../models/Progress': {},

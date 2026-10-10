@@ -11,7 +11,7 @@ import FilterDropdown from "../components/ui/FilterDropdown";
 import { getSheetBySlug } from "../services/sheetService";
 import {
   deleteNote,
-  getProgress,
+  getProgressSummary,
   saveNotes,
   toggleBookmark,
   toggleQuestionSolved,
@@ -49,7 +49,7 @@ function SheetDetails() {
       try {
         const [res, progressResponse] = await Promise.all([
           getSheetBySlug(slug),
-          isAuthenticated ? getProgress().catch(() => null) : Promise.resolve(null),
+          isAuthenticated ? getProgressSummary().catch(() => null) : Promise.resolve(null),
         ]);
         if (cancelled) return;
         setSheet(res.data.sheet);

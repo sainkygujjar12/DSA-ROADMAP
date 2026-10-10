@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
+const fs = require('node:fs');
+const path = require('node:path');
 process.env.NODE_ENV = 'production';
 process.env.CLIENT_URL = 'https://example.com';
 process.env.JWT_SECRET = 'test-secret-for-http-tests-123456789';
@@ -27,6 +29,18 @@ test('missing assets return 404 rather than HTML', async () => {
   const response = await fetch(base + '/assets/missing-chunk.js');
   assert.equal(response.status, 404);
   assert.equal((await response.json()).success, false);
+});
+test('hashed assets stay cached while HTML remains revalidatable', async () => {
+  const html = await fetch(base + '/');
+  assert.doesNotMatch(html.headers.get('cache-control') || '', /immutable|max-age=[1-9]/);
+  const assets = fs.readdirSync(path.resolve(__dirname, '../../client/dist/assets'));
+  const script = assets.find(name => name.endsWith('.js'));
+  const response = await fetch(base + '/assets/' + script);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /max-age=31536000/);
+  assert.match(response.headers.get('cache-control'), /immutable/);
+  const logo = await fetch(base + '/company-logos/google.png');
+  assert.match(logo.headers.get('cache-control'), /max-age=86400/);
 });
 test('production CORS allows configured origins but not development previews', async () => {
   const allowed = await fetch(base + '/api/health', { headers: { Origin: 'https://example.com' } });

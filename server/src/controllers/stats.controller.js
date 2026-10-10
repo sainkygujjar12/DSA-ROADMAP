@@ -2,6 +2,7 @@ const Question = require("../models/Question");
 const Company = require("../models/Company");
 const Topic = require("../models/Topic");
 const Sheet = require("../models/Sheet");
+const { catalogCache } = require('../utils/catalogCache');
 
 // ======================================
 // Public Stats
@@ -16,12 +17,12 @@ exports.getPublicStats = async (req, res) => {
       totalCompanies,
       totalTopics,
       totalSheets,
-    ] = await Promise.all([
+    ] = await catalogCache.get('stats', () => Promise.all([
       Question.countDocuments({ isActive: true }),
       Company.countDocuments(),
       Topic.countDocuments(),
       Sheet.countDocuments(),
-    ]);
+    ]));
 
     res.status(200).json({
       success: true,

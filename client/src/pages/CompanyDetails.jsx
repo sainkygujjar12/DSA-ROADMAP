@@ -6,6 +6,7 @@ import MainLayout from "../components/layout/MainLayout";
 import Loader from "../components/ui/Loader";
 import TopicHeader from "../components/topic/TopicHeader";
 import CompanyIcon from "../components/ui/CompanyIcon";
+import Pagination from "../components/ui/Pagination";
 import SearchBar from "../components/topic/SearchBar";
 import QuestionTable from "../components/topic/QuestionTable";
 import FilterDropdown from "../components/ui/FilterDropdown";
@@ -16,7 +17,7 @@ function CompanyDetails() {
   const { slug } = useParams();
 
   const [loading, setLoading] = useState(true);
-  const { search, difficulty, topic, pattern, setField } = usePracticeList(!loading);
+  const { search, difficulty, topic, pattern, page, setField } = usePracticeList(!loading);
   const setSearch = value => setField("search", value);
   const setDifficulty = value => setField("difficulty", value);
   const setTopic = value => setField("topic", value);
@@ -74,6 +75,9 @@ function CompanyDetails() {
       );
     });
   }, [questions, search, difficulty, topic, pattern]);
+  const totalPages = Math.max(1, Math.ceil(filteredQuestions.length / 40));
+  const currentPage = Math.min(page, totalPages);
+  const visibleQuestions = filteredQuestions.slice((currentPage - 1) * 40, currentPage * 40);
 
   // ================= PATTERN OPTIONS =================
   const patternOptions = useMemo(() => {
@@ -198,7 +202,8 @@ function CompanyDetails() {
       </div>
 
       {/* Table */}
-      <QuestionTable questions={filteredQuestions} />
+      <QuestionTable questions={visibleQuestions} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={value => setField('page', value)} />
     </MainLayout>
   );
 }

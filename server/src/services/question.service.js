@@ -51,7 +51,7 @@ exports.getQuestionBySlug = async (slug) => {
   return await Question.findOne({ slug })
     .populate("topic", "name slug")
     .populate("companies", "name slug logo color")
-    .populate("sheets", "name slug");
+    .populate("sheets", "name slug").lean();
 };
 
 // ======================================

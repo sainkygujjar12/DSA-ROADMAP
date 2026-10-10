@@ -19,6 +19,68 @@ const practiceQuestions = Array.from({ length: 70 }, (_, i) => ({
   description: 'Find an efficient solution and explain the time complexity.', solved: false,
 }));
 
+test('public landing page does not request Google authentication scripts', async ({ page }) => {
+  await prepare(page, false);
+  const googleRequests = [];
+  page.on('request', request => {
+    if (request.url().startsWith('https://accounts.google.com/')) googleRequests.push(request.url());
+  });
+  await page.goto('/');
+  await expect(page.locator('.hero-path-card').first()).toBeVisible();
+  await expect(page.locator('.hero-sheet-card').first()).toBeAttached();
+  expect(googleRequests).toEqual([]);
+  await expect(page.locator('footer')).toContainText('Made by Sainky Gurjar');
+  await expect(page.getByRole('navigation', { name: 'Creator profiles' }).getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/sainkygujjar12');
+  await expect(page.getByRole('navigation', { name: 'Creator profiles' }).getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/sainky-gurjar-4290b1367/');
+});
+
+test('company lists render one page and retain it when returning from a question', async ({ page }) => {
+  await prepare(page);
+  await page.goto('/companies/google');
+  await expect(page.locator('.question-table-row')).toHaveCount(40);
+  await page.getByRole('navigation', { name: 'Pagination' }).getByRole('button', { name: 'Next' }).click();
+  await expect(page.locator('.question-table-row')).toHaveCount(30);
+  await expect(page).toHaveURL(/page=2/);
+  await page.getByRole('link', { name: 'Practice question 41', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Practice question 41', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Back to questions' }).click();
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toContainText('Page 2 of 2');
+  await expect(page.locator('.question-table-row')).toHaveCount(30);
+  await page.getByRole('searchbox').fill('Practice question 1');
+  await expect(page.locator('.question-table-row')).toHaveCount(11);
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('searchbox')).toHaveValue('Practice question 1');
+});
+
+test('question appears with lightweight progress before a slow history write finishes', async ({ page }) => {
+  const errors = await prepare(page);
+  let releaseHistory;
+  const historyGate = new Promise(resolve => { releaseHistory = resolve; });
+  let historyStarted = false;
+  await page.route('**/api/progress/last-visited/**', async route => {
+    historyStarted = true;
+    await historyGate;
+    await route.fulfill({ status: 503, json: { success: false, message: 'Temporarily unavailable' } });
+  });
+  await page.route('**/api/progress?summary=true', route => route.fulfill({ json: {
+    success: true, data: { solvedQuestions: ['question-1'], bookmarkedQuestions: ['question-1'], notes: [{ question: 'question-1', content: 'My approach' }] },
+  } }));
+  try {
+    await page.goto('/questions/practice-1');
+    await expect(page.getByRole('heading', { name: 'Practice question 1', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Solved', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Bookmarked', exact: true })).toBeVisible();
+    await expect(page.getByRole('textbox')).toHaveValue('My approach');
+    await expect.poll(() => historyStarted).toBe(true);
+    const failedWrite = page.waitForResponse(response => response.url().includes('/last-visited/'));
+    releaseHistory();
+    await failedWrite;
+    await expect(page.getByRole('heading', { name: 'Practice question 1', exact: true })).toBeVisible();
+    expect(errors).toEqual([]);
+  } finally { releaseHistory(); }
+});
+
 async function prepare(page, authenticated = true, role = 'user') {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

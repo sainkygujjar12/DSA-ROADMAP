@@ -2,8 +2,8 @@ const { escapeRegex, pageSize, pageNumber } = require("../utils/queryValidation"
 const Topic = require("../models/Topic");
 const Question = require("../models/Question");
 const Progress = require("../models/Progress");
+const { catalogCache } = require('../utils/catalogCache');
 const {
-  getUserQuestionFlags,
   attachUserFlags,
 } = require("../services/progress.service");
 
@@ -12,7 +12,7 @@ const {
 // ==============================
 const getAllTopics = async (req, res) => {
   try {
-    const [topics, questionCounts] = await Promise.all([
+    const [topics, questionCounts] = await catalogCache.get('topics', () => Promise.all([
       Topic.find().sort({ order: 1 }).lean(),
       Question.aggregate([
         { $match: { isActive: true } },
@@ -23,7 +23,7 @@ const getAllTopics = async (req, res) => {
           },
         },
       ]),
-    ]);
+    ]));
 
     const countByTopic = new Map(
       questionCounts.map((item) => [
@@ -124,7 +124,7 @@ const getSingleTopic = async (req, res) => {
 
     const skip = (pageNumber(page) - 1) * pageSize(limit);
 
-    const [questions, total] = await Promise.all([
+    const [questions, total, topicDifficultyTotals, progress] = await Promise.all([
       Question.find(query)
         .populate("companies", "name slug logo color")
         .populate("sheets", "name slug")
@@ -132,11 +132,8 @@ const getSingleTopic = async (req, res) => {
         .skip(skip)
         .limit(pageSize(limit)),
       Question.countDocuments(query),
-    ]);
-
-    // These totals intentionally ignore pagination, search, and filters so
-    // the summary remains accurate for the complete topic.
-    const topicDifficultyTotals = await Question.aggregate([
+      // Summary totals deliberately ignore pagination and search filters.
+      Question.aggregate([
       {
         $match: {
           topic: topic._id,
@@ -149,13 +146,13 @@ const getSingleTopic = async (req, res) => {
           total: { $sum: 1 },
         },
       },
-    ]);
-
-    const progress = req.user?.id
-      ? await Progress.findOne({ user: req.user.id })
-          .select("solvedQuestions")
+      ]),
+      req.user?.id
+      ? Progress.findOne({ user: req.user.id })
+          .select("solvedQuestions bookmarkedQuestions")
           .lean()
-      : null;
+      : null,
+    ]);
     const solvedIds = progress?.solvedQuestions || [];
     const solvedDifficultyTotals = solvedIds.length
       ? await Question.aggregate([
@@ -198,8 +195,8 @@ const getSingleTopic = async (req, res) => {
       0
     );
 
-    const { solvedSet, bookmarkedSet } =
-      await getUserQuestionFlags(req.user?.id);
+    const solvedSet = new Set(solvedIds.map(String));
+    const bookmarkedSet = new Set((progress?.bookmarkedQuestions || []).map(String));
 
     return res.status(200).json({
       success: true,

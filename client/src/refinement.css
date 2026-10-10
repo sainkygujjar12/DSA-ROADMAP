@@ -333,3 +333,12 @@ html[data-theme="light"] .admin-content :is(label, button)[class*="bg-slate-7"] 
 .admin-content .text-cyan-400 { color: var(--app-accent); }
 html[data-theme] :is(.activity-months, .practice-breadcrumb, .topic-hero-main p:not(.eyebrow-label), .sheets-toolbar > span) { color: var(--app-muted); }
 html[data-theme="light"] .app-content a.text-cyan-500 { color: var(--app-accent); }
+.creator-credit { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; color: var(--app-muted); font-size: 12px; line-height: 1.6; }
+.creator-credit strong { color: var(--app-text); font-weight: 500; }
+.creator-credit nav { display: flex; align-items: center; gap: 18px; }
+.creator-credit a { display: inline-flex; align-items: center; gap: 7px; padding-block: 8px; color: var(--app-muted); transition: color 160ms; }
+.creator-credit a:hover, .creator-credit a:focus-visible { color: var(--app-accent); }
+.creator-credit svg { font-size: 15px; }
+.workspace-footer { border-top: 1px solid var(--app-border); padding-block: 20px; margin-top: 32px; }
+.workspace-footer .creator-credit { justify-content: space-between; }
+.landing-footer-bottom { flex-wrap: wrap; gap: 16px 24px; }

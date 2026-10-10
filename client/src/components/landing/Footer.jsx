@@ -1,6 +1,7 @@
-import { FaArrowUp, FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaArrowUp } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Logo from "../common/Logo";
+import CreatorCredit from "../common/CreatorCredit";
 
 function Footer() {
   return (
@@ -28,10 +29,8 @@ function Footer() {
         </div>
         <div className="landing-footer-bottom">
           <span>© 2026 DSA Roadmap. Built for consistent practice.</span>
+          <CreatorCredit />
           <div className="landing-socials">
-            <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub"><FaGithub /></a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn"><FaLinkedin /></a>
-            <a href="https://x.com" target="_blank" rel="noreferrer" aria-label="X"><FaTwitter /></a>
             <a href="#top" aria-label="Back to top"><FaArrowUp /></a>
           </div>
         </div>

@@ -7,13 +7,13 @@ const Question = require("../models/Question");
 // ======================================
 
 exports.getDashboardStats = async (userId) => {
-  // User Info
-  const user = await User.findById(userId).select(
+  const [user, progress, totalQuestions] = await Promise.all([
+    User.findById(userId).select(
     "name email avatar"
-  );
+  ).lean(),
 
   // Progress
-  const progress = await Progress.findOne({
+  Progress.findOne({
     user: userId,
   })
     .populate({
@@ -46,13 +46,13 @@ exports.getDashboardStats = async (userId) => {
     .populate({
       path: "notes.question",
       select: "title slug",
-    });
+    }).lean(),
 
   // Total Questions
-  const totalQuestions =
-    await Question.countDocuments({
+    Question.countDocuments({
       isActive: true,
-    });
+    }),
+  ]);
 
   // If user has no progress
   if (!progress) {

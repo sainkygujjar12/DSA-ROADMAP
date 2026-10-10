@@ -17,7 +17,7 @@ import NotesSection from "../components/question/NotesSection";
 
 import { getQuestionBySlug } from "../services/questionService";
 import {
-  getProgress,
+  getProgressSummary,
   toggleQuestionSolved,
   toggleBookmark,
   updateLastVisited,
@@ -45,24 +45,27 @@ function QuestionDetails() {
     let cancelled = false;
 
     async function fetchData() {
+      setLoading(true);
       try {
         const [questionResponse, progressResponse] = await Promise.all([
           getQuestionBySlug(slug),
-          getProgress(),
+          getProgressSummary(),
         ]);
         const questionData = questionResponse?.data || null;
         if (cancelled) return;
         setQuestion(questionData);
         if (!questionData?._id) return;
 
-        await updateLastVisited(questionData._id);
-        if (cancelled) return;
+        // A history write must never delay reading or hide a valid question.
+        updateLastVisited(questionData._id).catch(error => {
+          console.error("Could not save last visited question:", error);
+        });
 
         const progress = progressResponse?.data || {};
-        const solvedIds = (progress.solvedQuestions || []).map((item) => item?._id);
-        const bookmarkedIds = (progress.bookmarkedQuestions || []).map((item) => item?._id);
+        const solvedIds = (progress.solvedQuestions || []).map((item) => item?._id || item);
+        const bookmarkedIds = (progress.bookmarkedQuestions || []).map((item) => item?._id || item);
         const existingNote = (progress.notes || []).find(
-          (item) => item?.question?._id === questionData._id
+          (item) => (item?.question?._id || item?.question) === questionData._id
         );
 
         setSolved(solvedIds.includes(questionData._id));

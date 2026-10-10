@@ -1,5 +1,6 @@
 const Sheet = require("../models/Sheet");
 const Question = require("../models/Question");
+const { catalogCache } = require('../utils/catalogCache');
 const {
   getUserQuestionFlags,
   attachUserFlags,
@@ -9,15 +10,15 @@ const {
 // Get All Sheets
 // ======================================
 
-exports.getSheets = async () => {
+exports.getSheets = () => catalogCache.get('sheets', async () => {
   const sheets = await Sheet.find().sort({
     name: 1,
-  });
+  }).select('-entries.title -entries.order -entries.resourceUrl -entries.sourceUrl -entries.question -entries.kind').lean();
 
   const result = await Promise.all(
     sheets.map(async (sheet) => {
       const totalQuestions = sheet.entries?.length || await Question.countDocuments({ sheets: sheet._id });
-      const { entries, ...metadata } = sheet.toObject();
+      const { entries, ...metadata } = sheet;
 
       return {
         ...metadata,
@@ -28,7 +29,7 @@ exports.getSheets = async () => {
   );
 
   return result;
-};
+});
 
 // ======================================
 // Get Sheet By Slug
@@ -37,7 +38,7 @@ exports.getSheets = async () => {
 exports.getSheetBySlug = async (slug, userId) => {
   const sheet = await Sheet.findOne({
     slug,
-  });
+  }).lean();
 
   if (!sheet) {
     const error = new Error("Sheet not found");
@@ -46,7 +47,7 @@ exports.getSheetBySlug = async (slug, userId) => {
   }
 
   const orderedEntries = [...(sheet.entries || [])].sort((a, b) => a.order - b.order);
-  const questions = await Question.find(orderedEntries.length
+  const [questions, { solvedSet, bookmarkedSet }] = await Promise.all([Question.find(orderedEntries.length
     ? { _id: { $in: orderedEntries.map(entry => entry.question) } }
     : { sheets: sheet._id })
     .populate("topic", "name slug icon")
@@ -55,14 +56,11 @@ exports.getSheetBySlug = async (slug, userId) => {
     .sort({
       difficulty: 1,
       title: 1,
-    });
-
-  const { solvedSet, bookmarkedSet } =
-    await getUserQuestionFlags(userId);
+    }).lean(), getUserQuestionFlags(userId)]);
 
   const flagged = attachUserFlags(questions, solvedSet, bookmarkedSet);
   const byId = new Map(flagged.map(question => [question._id.toString(), question]));
-  const { entries, ...metadata } = sheet.toObject();
+  const { entries, ...metadata } = sheet;
   return {
     sheet: { ...metadata, totalQuestions: entries?.length || questions.length },
     questions: orderedEntries.length ? orderedEntries.map(entry => {

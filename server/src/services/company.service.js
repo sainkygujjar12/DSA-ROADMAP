@@ -1,5 +1,6 @@
 const Company = require("../models/Company");
 const Question = require("../models/Question");
+const { catalogCache } = require('../utils/catalogCache');
 const {
   getUserQuestionFlags,
   attachUserFlags,
@@ -9,22 +10,20 @@ const {
 // Get All Companies
 // ======================================
 
-exports.getCompanies = async () => {
-  const companies = await Company.find().sort({
+exports.getCompanies = () => catalogCache.get('companies', async () => {
+  const [companies, counts] = await Promise.all([Company.find().sort({
     name: 1,
-  });
-
-  const counts = await Question.aggregate([
+  }).lean(), Question.aggregate([
     { $match: { isActive: true } },
     { $unwind: "$companies" },
     { $group: { _id: "$companies", count: { $sum: 1 } } },
-  ]);
+  ])]);
   const countByCompany = new Map(counts.map(row => [String(row._id), row.count]));
   return companies.map(company => ({
-    ...company.toObject(),
+    ...company,
     totalQuestions: countByCompany.get(String(company._id)) || 0,
   }));
-};
+});
 
 // ======================================
 // Get Company By Slug
@@ -36,13 +35,13 @@ exports.getCompanyBySlug = async (
 ) => {
   const company = await Company.findOne({
     slug,
-  });
+  }).lean();
 
   if (!company) {
     throw new Error("Company not found");
   }
 
-  const questions = await Question.find({
+  const [questions, { solvedSet, bookmarkedSet }] = await Promise.all([Question.find({
     companies: company._id,
     isActive: true,
   })
@@ -52,10 +51,7 @@ exports.getCompanyBySlug = async (
     .sort({
       difficulty: 1,
       title: 1,
-    });
-
-  const { solvedSet, bookmarkedSet } =
-    await getUserQuestionFlags(userId);
+    }).lean(), getUserQuestionFlags(userId)]);
 
   return {
     company,

@@ -82,6 +82,7 @@ app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 // ==============================
 
 app.use('/api', edgeLimiter);
+app.use('/api', require('./middleware/catalogCache'));
 app.use('/api', (req, res, next) => req.path === '/health' ? next() : optionalAuth(req, res, next));
 app.use('/api', userLimiter);
 app.use('/api/auth', authLimiter);
@@ -138,6 +139,9 @@ app.use("/api/admin", adminRoutes);
 
 if (process.env.NODE_ENV === "production") {
   const staticDirectory = path.resolve(__dirname, "../../client/dist");
+  // Vite fingerprints these filenames, so a new deploy always gets new URLs.
+  app.use('/assets', express.static(path.join(staticDirectory, 'assets'), { maxAge: '1y', immutable: true }));
+  app.use('/company-logos', express.static(path.join(staticDirectory, 'company-logos'), { maxAge: '1d' }));
   app.use(express.static(staticDirectory));
   app.get("/{*splat}", (req, res, next) => {
     if (req.path.startsWith("/api/") || path.extname(req.path)) return next();

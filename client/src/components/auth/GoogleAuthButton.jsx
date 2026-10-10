@@ -1,4 +1,4 @@
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 
 import { googleLogin } from "../../services/authService";
@@ -28,6 +28,7 @@ function GoogleAuthButton() {
   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) return null;
 
   return (
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <div className="flex justify-center">
       <GoogleLogin
         onSuccess={handleSuccess}
@@ -40,6 +41,7 @@ function GoogleAuthButton() {
         width="320"
       />
     </div>
+    </GoogleOAuthProvider>
   );
 }
 

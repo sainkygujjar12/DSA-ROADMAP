@@ -1,5 +1,6 @@
 const {
   getProgress,
+  getProgressSummary,
   toggleSolvedQuestion,
   updateLastVisitedQuestion,
   toggleBookmark,
@@ -13,7 +14,9 @@ const {
 
 exports.getUserProgress = async (req, res) => {
   try {
-    const progress = await getProgress(req.user.id);
+    const progress = req.query.summary === 'true'
+      ? await getProgressSummary(req.user.id)
+      : await getProgress(req.user.id);
 
     return res.status(200).json({
       success: true,

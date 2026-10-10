@@ -1,8 +1,10 @@
+import CreatorCredit from "../common/CreatorCredit";
+
 function Footer() {
   return (
-    <footer className="border-t border-slate-800 py-8">
-      <div className="mx-auto max-w-7xl px-6 text-center text-slate-400">
-        © 2026 DSA Roadmap. All rights reserved.
+    <footer className="workspace-footer">
+      <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
+        <CreatorCredit />
       </div>
     </footer>
   );

@@ -6,6 +6,11 @@ let progressCacheToken = null;
 let progressCacheTime = 0;
 const PROGRESS_CACHE_TTL = 15_000;
 
+export const getProgressSummary = async () => {
+  const response = await api.get('/progress', { params: { summary: true } });
+  return response.data;
+};
+
 // =====================================
 // Helper
 // =====================================

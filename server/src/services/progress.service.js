@@ -2,6 +2,14 @@ const Progress = require("../models/Progress");
 const Question = require("../models/Question");
 const { ensureProgress, mutateProgress } = require("../utils/progressMutation");
 
+// Question/sheet screens only need IDs and notes, not every solved question's
+// populated topic, companies and sheets. Keep this private data uncached.
+exports.getProgressSummary = async (userId) => {
+  return await Progress.findOne({ user: userId })
+    .select('solvedQuestions bookmarkedQuestions notes')
+    .lean() || { solvedQuestions: [], bookmarkedQuestions: [], notes: [] };
+};
+
 // ======================================
 // Get Solved / Bookmarked ID Sets
 // Lightweight helper (no populate) used by public

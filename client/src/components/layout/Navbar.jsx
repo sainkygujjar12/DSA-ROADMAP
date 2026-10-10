@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { LayoutGroup, motion } from "framer-motion";
+import useInterfaceMotion from "../../hooks/useInterfaceMotion";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FaBars, FaTimes, FaMoon, FaSun, FaChevronDown, FaArrowRight, FaBookmark, FaRegStickyNote, FaUserCircle, FaSlidersH, FaShieldAlt, FaSignOutAlt } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
@@ -18,6 +20,8 @@ function Navbar() {
   const [open, setOpen] = useState(false);
   const account = useRef(null);
   const navigate = useNavigate();
+  const navigationId = useId();
+  const animate = useInterfaceMotion();
   const close = () => {
     setOpen(false);
     if (account.current) account.current.open = false;
@@ -36,9 +40,9 @@ function Navbar() {
     <header className="app-header" onKeyDown={event => { if (event.key === "Escape") { const wasAccountOpen = account.current?.open; close(); if (wasAccountOpen) account.current?.querySelector("summary")?.focus(); } }}>
       <div className="app-nav">
         <Logo className="app-brand" />
-        <nav className="app-desktop-links" aria-label="Primary navigation">
-          {navigation.map(item => <NavLink key={item.path} to={item.path} className={({ isActive }) => `app-nav-link ${isActive ? "active" : ""}`}>{item.label}</NavLink>)}
-        </nav>
+        <LayoutGroup id={navigationId}><nav className="app-desktop-links" aria-label="Primary navigation">
+          {navigation.map(item => <NavLink key={item.path} to={item.path} className={({ isActive }) => `app-nav-link ${isActive ? "active" : ""}`}>{({ isActive }) => <>{isActive && <motion.span aria-hidden="true" className="app-nav-indicator" layoutId={animate ? "active-navigation" : undefined} transition={{ duration: animate ? .2 : 0 }} />}<span className="app-nav-label">{item.label}</span></>}</NavLink>)}
+        </nav></LayoutGroup>
         <div className="app-nav-actions">
           <button className="app-icon-button" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
             {theme === "dark" ? <FaSun /> : <FaMoon />}

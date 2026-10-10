@@ -1,3 +1,4 @@
+import HoverGrid from "../components/ui/HoverGrid";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -135,7 +136,7 @@ function Dashboard() {
               <div><h2>Your progress</h2><p>Build a strong foundation, one topic at a time.</p></div>
               <Link to="/roadmap">View roadmap <FaArrowRight /></Link>
             </div>
-            <div className="dashboard-course-grid">
+            <HoverGrid className="dashboard-course-grid">
               {courseTopics.length ? courseTopics.map((topic, index) => (
                 <Link key={topic._id} to={`/roadmap/${topic.slug}`} className={`dashboard-course-card ${percent(topic.progress) === 100 ? "is-complete" : ""}`} style={{ "--card-order": index }}>
                   <div className="dashboard-topic-top"><TopicIcon slug={topic.slug} /><span className="dashboard-topic-state">{percent(topic.progress) === 100 ? <><FaCheck /> Complete</> : topic.solvedQuestions > 0 ? "In progress" : "Ready to start"}</span></div>
@@ -147,7 +148,7 @@ function Dashboard() {
               )) : (
                 <div className="dashboard-empty">Your courses will appear here.</div>
               )}
-            </div>
+            </HoverGrid>
           </section>
         </main>
       </div>

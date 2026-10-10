@@ -1,3 +1,4 @@
+import HoverGrid from "../ui/HoverGrid";
 import SheetCard from "./SheetCard";
 
 function SheetGrid({ sheets }) {
@@ -6,11 +7,11 @@ function SheetGrid({ sheets }) {
   }
 
   return (
-    <div className="sheets-grid">
+    <HoverGrid className="sheets-grid">
       {sheets.map((sheet) => (
         <SheetCard key={sheet._id} sheet={sheet} />
       ))}
-    </div>
+    </HoverGrid>
   );
 }
 

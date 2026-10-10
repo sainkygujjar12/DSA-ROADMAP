@@ -1,87 +1,29 @@
-import {
-  FaArrowRight,
-  FaBookOpen,
-  FaBookmark,
-  FaBuilding,
-  FaChartLine,
-  FaClipboardList,
-  FaCode,
-} from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { FiArrowRight, FiBookOpen, FiBriefcase, FiCheck, FiLayers, FiTrendingUp } from "react-icons/fi";
+import { BentoGrid, BentoGridItem } from "../ui/BentoGrid";
+import CompanyIcon from "../ui/CompanyIcon";
 
-const features = [
-  {
-    icon: FaCode,
-    label: "01",
-    title: "Topic-wise roadmap",
-    desc: "A clear path from arrays to dynamic programming, with every next step visible.",
-    href: "/roadmap",
-  },
-  {
-    icon: FaBuilding,
-    label: "02",
-    title: "Company patterns",
-    desc: "See which problems appear most often at the companies you want to join.",
-    href: "/companies",
-  },
-  {
-    icon: FaClipboardList,
-    label: "03",
-    title: "Curated sheets",
-    desc: "Use focused collections when you want a shorter, high-signal practice plan.",
-    href: "/sheets",
-  },
-  {
-    icon: FaBookmark,
-    label: "04",
-    title: "Bookmarks and notes",
-    desc: "Save tricky questions and write the insight you want to remember next time.",
-    href: "/bookmarks",
-  },
-  {
-    icon: FaBookOpen,
-    label: "05",
-    title: "Practice in context",
-    desc: "Open the original problem, explanation, and related questions without losing your place.",
-    href: "/roadmap/arrays",
-  },
-  {
-    icon: FaChartLine,
-    label: "06",
-    title: "Progress that responds",
-    desc: "Your solved count, heatmap, streaks, and difficulty breakdown update as you practice.",
-    href: "/dashboard",
-  },
-];
-
-function Features() {
-  return (
-    <section className="landing-section landing-features" aria-labelledby="features-heading">
-      <div className="landing-container">
-        <div className="landing-section-heading">
-          <div>
-            <p className="landing-eyebrow">One focused workspace</p>
-            <h2 id="features-heading">Everything you need to prepare with intent<span>.</span></h2>
-          </div>
-          <p>Less tab switching. More deliberate practice. Every feature is connected to the same learning path.</p>
-        </div>
-
-        <div className="landing-feature-grid">
-          {features.map(({ icon: Icon, label, title, desc, href }) => (
-            <Link key={title} to={href} className="landing-feature-card">
-              <div className="landing-feature-card-top">
-                <span className="landing-feature-icon"><Icon /></span>
-                <span>{label}</span>
-              </div>
-              <h3>{title}</h3>
-              <p>{desc}</p>
-              <span className="landing-card-link">Explore <FaArrowRight /></span>
-            </Link>
-          ))}
-        </div>
+export default function Features({ roadmap }) {
+  const preview = ['arrays', 'strings', 'binary-search'].map(slug => roadmap.topics.find(topic => topic.slug === slug)).filter(Boolean);
+  return <section className="landing-section landing-features" aria-labelledby="features-heading">
+    <div className="landing-container">
+      <div className="landing-section-heading">
+        <div><p className="landing-eyebrow">Built around your practice</p><h2 id="features-heading">A place for every step<span>.</span></h2></div>
+        <p>Find your next problem, work through it, and keep what you learn. Everything stays connected.</p>
       </div>
-    </section>
-  );
+      <BentoGrid>
+        <BentoGridItem wide label="01 / The foundations" icon={<FiLayers />} to="/roadmap"
+          title="Know what comes next." description="A topic-by-topic path from your first array to dynamic programming. Pick up at your own pace."
+          header={<div className="bento-path">{preview.length ? preview.map((topic, index) => <div key={topic.slug}><span>{String(index + 1).padStart(2, '0')}</span><strong>{topic.name}</strong><FiArrowRight /></div>) : <p>Arrays · Strings · Binary search</p>}</div>} />
+        <BentoGridItem label="02 / Your next interview" icon={<FiBriefcase />} to="/companies"
+          title="Prepare with a destination." description="Explore company-tagged questions and the patterns behind them."
+          header={<div className="bento-company-marks">{['Google', 'Amazon', 'Microsoft', 'Apple'].map(name => <CompanyIcon key={name} company={{ name }} size="md" />)}</div>} />
+        <BentoGridItem label="03 / A focused plan" icon={<FiBookOpen />} to="/sheets"
+          title="Follow a proven collection." description="Work through Love Babbar, Striver SDE, and curated interview sheets, section by section."
+          header={<div className="bento-sheets"><span><FiBookOpen />Love Babbar</span><span><FiLayers />Striver SDE</span></div>} />
+        <BentoGridItem wide label="04 / Your learning loop" icon={<FiTrendingUp />} to="/dashboard"
+          title="Make the practice count." description="Track solved questions, revisit your bookmarks, and save the insight that makes a hard problem click."
+          header={<div className="bento-learning-loop">{['Solve a problem', 'Capture the insight', 'Come back stronger'].map((step, index) => <div key={step}><span>{index === 0 ? <FiCheck /> : String(index + 1).padStart(2, '0')}</span><strong>{step}</strong></div>)}</div>} />
+      </BentoGrid>
+    </div>
+  </section>;
 }
-
-export default Features;

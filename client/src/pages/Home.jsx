@@ -17,7 +17,7 @@ function Home() {
 
       <Companies />
 
-      <Features />
+      <Features roadmap={roadmap} />
 
       <RoadmapPreview roadmap={roadmap} />
 

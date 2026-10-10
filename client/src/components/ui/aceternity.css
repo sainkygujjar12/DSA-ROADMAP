@@ -1,0 +1,72 @@
+/* Aceternity adaptations share the application's theme and motion preferences. */
+.hover-grid-item { position: relative; min-width: 0; isolation: isolate; }
+.hover-grid-item > :not(.hover-grid-highlight) { position: relative; z-index: 1; height: 100%; }
+.hover-grid-item > a { display: block; }
+.hover-grid-highlight { position: absolute; inset: -5px; border-radius: 18px; background: var(--app-accent-soft); border: 1px solid var(--app-accent); pointer-events: none; z-index: 0; }
+html[data-theme] .hover-grid .hover-grid-item > :not(.hover-grid-highlight):hover { transform: none; }
+.bento-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.bento-card { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--app-border); background: var(--app-surface); border-radius: 18px; padding: 28px; transition: border-color 180ms, box-shadow 180ms; }
+.bento-wide { grid-column: span 2; }
+.bento-card:hover, .bento-card:focus-visible { border-color: var(--app-accent); box-shadow: var(--app-shadow); }
+.bento-card-top { display: flex; justify-content: space-between; gap: 12px; color: var(--app-muted); font-size: 11px; }
+.bento-card-top > span { display: flex; align-items: center; gap: 9px; }
+.bento-card-top svg { color: var(--app-accent); font-size: 16px; }
+.bento-card-preview { display: flex; align-items: center; min-height: 178px; padding: 26px 0; }
+.bento-card-copy { transition: transform 180ms ease; }
+.bento-card:hover .bento-card-copy { transform: translateX(3px); }
+.bento-card-copy h3 { color: var(--app-text); font-size: 22px; font-weight: 600; letter-spacing: -.035em; margin-bottom: 10px; }
+.bento-card-copy p { color: var(--app-muted); font-size: 13px; line-height: 1.8; max-width: 440px; }
+.bento-path { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.bento-path > div { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-bg); }
+.bento-path span, .bento-path svg { font-size: 11px; color: var(--app-accent); }
+.bento-path strong { font-size: 12px; font-weight: 500; color: var(--app-text); }
+.bento-path svg { align-self: flex-end; }
+.bento-company-marks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.bento-sheets { display: grid; gap: 10px; width: 100%; }
+.bento-sheets > span { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--app-border); border-radius: 10px; color: var(--app-text); background: var(--app-bg); font-size: 13px; }
+.bento-sheets svg { color: var(--app-accent); }
+.bento-learning-loop { display: flex; width: 100%; gap: 20px; justify-content: space-between; }
+.bento-learning-loop > div { display: flex; flex: 1; flex-direction: column; gap: 16px; border-top: 1px solid var(--app-border); padding-top: 16px; }
+.bento-learning-loop span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--app-accent); background: var(--app-accent-soft); font-size: 11px; }
+.bento-learning-loop strong { color: var(--app-text); font-size: 12px; font-weight: 500; }
+.animated-tabs { position: relative; display: flex; gap: 4px; border: 1px solid var(--app-border); border-radius: 10px; padding: 4px; margin: 0 24px 20px; background: var(--app-bg); }
+.animated-tabs > button { position: relative; flex: 1; padding: 8px 12px; border-radius: 7px; font-size: 12px; color: var(--app-muted); }
+.animated-tabs > button[aria-selected="true"] { color: var(--app-accent); font-weight: 600; }
+.animated-tab-highlight { position: absolute; inset: 0; border-radius: 7px; background: var(--app-accent-soft); pointer-events: none; }
+.animated-tab-label { position: relative; z-index: 1; }
+.hero-sheet-list { padding: 0 24px 24px; display: grid; gap: 12px; }
+.hero-sheet-card { display: flex; align-items: center; gap: 14px; padding: 20px 16px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-bg); }
+.hero-sheet-card:hover { border-color: var(--app-accent); }
+.hero-sheet-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--app-accent-soft); color: var(--app-accent); }
+.hero-sheet-card > div { flex: 1; min-width: 0; }
+.hero-sheet-card h3 { color: var(--app-text); font-size: 13px; font-weight: 600; }
+.hero-sheet-card p { color: var(--app-muted); font-size: 11px; margin-top: 5px; }
+.hero-sheet-card > svg { color: var(--app-muted); flex-shrink: 0; }
+.hero-sheets-browse, .hero-preview-message a { color: var(--app-accent); font-size: 12px; }
+.hero-sheets-browse { display: flex; align-items: center; justify-content: space-between; padding: 12px 2px; }
+.hero-preview-message { color: var(--app-muted); font-size: 13px; line-height: 1.8; padding: 24px 0; }
+@media (max-width: 1000px) {
+  .bento-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bento-wide { grid-column: span 2; }
+  .bento-card:last-child { grid-row: 3; }
+}
+@media (max-width: 600px) {
+  .bento-grid { grid-template-columns: minmax(0, 1fr); }
+  .bento-wide { grid-column: auto; }
+  .bento-card:last-child { grid-row: auto; }
+  .bento-card { padding: 22px; }
+  .bento-card-preview { min-height: 145px; }
+  .bento-path { gap: 7px; }
+  .bento-path > div { padding: 10px; }
+  .bento-path strong { font-size: 11px; }
+  .bento-learning-loop { gap: 12px; }
+  .bento-learning-loop strong { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .bento-card:hover .bento-card-copy { transform: none; } }
+html[data-motion="reduced"] .bento-card:hover .bento-card-copy { transform: none; }
+.app-desktop-links .app-nav-link { position: relative; isolation: isolate; }
+.app-desktop-links .app-nav-link.active { background: transparent; }
+.app-nav-indicator { position: absolute; inset: 0; border-radius: 8px; background: var(--app-accent-soft); z-index: 0; pointer-events: none; }
+.app-nav-label { position: relative; z-index: 1; }
+.theme-option { position: relative; isolation: isolate; }
+.theme-selection-frame { position: absolute; inset: -1px; border: 2px solid var(--app-accent); border-radius: inherit; pointer-events: none; }

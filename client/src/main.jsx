@@ -6,6 +6,7 @@ import App from "./App";
 
 import "./index.css";
 import "./refinement.css";
+import "./components/ui/aceternity.css";
 
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";

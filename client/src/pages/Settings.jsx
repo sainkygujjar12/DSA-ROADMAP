@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { LayoutGroup, motion } from "framer-motion";
+import useInterfaceMotion from "../hooks/useInterfaceMotion";
+import { useId, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaSun, FaMoon, FaCheck, FaSlidersH, FaShieldAlt, FaDownload, FaArrowRight } from "react-icons/fa";
 import MainLayout from "../components/layout/MainLayout";
@@ -12,6 +14,8 @@ export default function Settings() {
   const { user, refreshUser, logout } = useAuth();
   const { theme, setTheme, reduceMotion, setReduceMotion } = useTheme();
   const navigate = useNavigate();
+  const appearanceId = useId();
+  const animate = useInterfaceMotion();
   const [name, setName] = useState(user?.name || "");
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirm: "" });
   const [busy, setBusy] = useState("");
@@ -53,7 +57,7 @@ export default function Settings() {
         <div className="settings-panels">
           {notice && <div className={`settings-notice ${notice.error ? "is-error" : ""}`} role={notice.error ? "alert" : "status"}>{notice.text}</div>}
           <section id="appearance" className="settings-card"><div className="settings-section-title"><span>01</span><div><h2>Appearance</h2><p>Choose the workspace that feels right.</p></div></div>
-            <div className="theme-options">{["dark", "light"].map(value => <button key={value} type="button" className={`theme-option ${theme === value ? "selected" : ""}`} aria-pressed={theme === value} onClick={() => setTheme(value)}><span className={`theme-preview preview-${value}`}><i /><span><b /><b /><b /></span></span><span className="theme-option-label">{value === "dark" ? <FaMoon /> : <FaSun />}{value === "dark" ? "Midnight" : "Daylight"}{theme === value && <FaCheck />}</span></button>)}</div>
+            <LayoutGroup id={appearanceId}><div className="theme-options">{["dark", "light"].map(value => <button key={value} type="button" className={`theme-option ${theme === value ? "selected" : ""}`} aria-pressed={theme === value} onClick={() => setTheme(value)}>{theme === value && <motion.span className="theme-selection-frame" aria-hidden="true" layoutId={animate ? "selected-theme" : undefined} transition={{ duration: animate ? .2 : 0 }} />}<span className={`theme-preview preview-${value}`}><i /><span><b /><b /><b /></span></span><span className="theme-option-label">{value === "dark" ? <FaMoon /> : <FaSun />}{value === "dark" ? "Midnight" : "Daylight"}{theme === value && <FaCheck />}</span></button>)}</div></LayoutGroup>
             <div className="settings-row"><div><h3>Reduced motion</h3><p>Keep transitions quiet and pause decorative animations.</p></div><button type="button" role="switch" aria-checked={reduceMotion} aria-label="Reduced motion" className={`settings-switch ${reduceMotion ? "on" : ""}`} onClick={() => setReduceMotion(value => !value)}><span /></button></div>
             <p className="settings-footnote">Appearance preferences are saved on this device. Your system’s reduced-motion preference is always respected.</p>
           </section>
